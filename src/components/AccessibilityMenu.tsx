@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Accessibility, X, Type, Contrast, MousePointer2, Type as FontIcon } from "lucide-react";
+import { Settings, X, Type, Contrast, MousePointer2, Type as FontIcon } from "lucide-react";
 
 export function AccessibilityMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,8 +10,27 @@ export function AccessibilityMenu() {
   const [dyslexicFont, setDyslexicFont] = useState(false);
   const [fontSize, setFontSize] = useState<"normal" | "large" | "xlarge">("normal");
   const [showCursor, setShowCursor] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Detect if device has no mousepad (mobile/tablet)
+    const detectMobile = () => {
+      const hasTouch = () => {
+        return (
+          typeof window !== 'undefined' &&
+          (navigator.maxTouchPoints > 0 ||
+            navigator.msMaxTouchPoints > 0 ||
+            ('ontouchstart' in window))
+        );
+      };
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        typeof navigator !== 'undefined' ? navigator.userAgent : ''
+      );
+      return (hasTouch() || isMobileDevice) && window.matchMedia('(max-width: 1024px)').matches;
+    };
+    
+    setIsMobile(detectMobile());
+    
     // Load from localStorage
     const saved = localStorage.getItem("accessibility-settings");
     if (saved) {
@@ -20,7 +39,10 @@ export function AccessibilityMenu() {
         setHighContrast(settings.highContrast ?? false);
         setDyslexicFont(settings.dyslexicFont ?? false);
         setFontSize(settings.fontSize ?? "normal");
-        setShowCursor(settings.showCursor ?? false);
+        // Only load showCursor if not on mobile
+        if (!detectMobile()) {
+          setShowCursor(settings.showCursor ?? false);
+        }
       } catch (e) {
         console.error("Failed to parse accessibility settings", e);
       }
@@ -65,14 +87,14 @@ export function AccessibilityMenu() {
   const toggleMenu = () => setIsOpen(!isOpen);
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none">
+    <div className="fixed z-[9999] pointer-events-none inset-x-0 inset-y-0 flex items-end justify-end p-4 sm:p-6" style={{ pointerEvents: 'none' }}>
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="pointer-events-auto mb-4 p-6 bg-white border border-[#e5e5e5] shadow-2xl w-[320px] min-w-[320px] max-w-[calc(100vw-3rem)] rounded-sm overflow-hidden"
+            className="pointer-events-auto mb-4 p-4 sm:p-6 bg-white border border-[#e5e5e5] shadow-2xl w-[calc(100vw-2rem)] sm:w-[320px] sm:min-w-[320px] max-w-[calc(100vw-2rem)] sm:max-w-[calc(100vw-3rem)] rounded-sm overflow-hidden"
           >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[10px] tracking-[0.3em] uppercase font-bold text-[#1a1a1a]">
@@ -134,24 +156,20 @@ export function AccessibilityMenu() {
                 </div>
               </div>
 
-              <button
-                onClick={() => setShowCursor(!showCursor)}
-                className={`w-full flex items-center justify-between p-3 border transition-all duration-300 ${
-                  showCursor ? "border-[#c9a962] bg-[#c9a962]/5" : "border-[#e5e5e5] hover:border-[#c9a962]/30"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <MousePointer2 size={14} className={showCursor ? "text-[#c9a962]" : "text-[#71717a]"} />
-                  <span className="text-[11px] uppercase tracking-wider font-medium">Standard Cursor</span>
-                </div>
-                <div className={`w-2 h-2 rounded-full ${showCursor ? "bg-[#c9a962]" : "bg-[#e5e5e5]"}`} />
-              </button>
-            </div>
-            
-            <div className="mt-6 pt-4 border-t border-[#e5e5e5] text-center">
-              <p className="text-[9px] text-[#a1a1aa] uppercase tracking-[0.2em]">
-                Professional accessibility tools
-              </p>
+              {!isMobile && (
+                <button
+                  onClick={() => setShowCursor(!showCursor)}
+                  className={`w-full flex items-center justify-between p-3 border transition-all duration-300 ${
+                    showCursor ? "border-[#c9a962] bg-[#c9a962]/5" : "border-[#e5e5e5] hover:border-[#c9a962]/30"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <MousePointer2 size={14} className={showCursor ? "text-[#c9a962]" : "text-[#71717a]"} />
+                    <span className="text-[11px] uppercase tracking-wider font-medium">Standard Cursor</span>
+                  </div>
+                  <div className={`w-2 h-2 rounded-full ${showCursor ? "bg-[#c9a962]" : "bg-[#e5e5e5]"}`} />
+                </button>
+              )}
             </div>
           </motion.div>
         )}
@@ -161,10 +179,10 @@ export function AccessibilityMenu() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={toggleMenu}
-        className="pointer-events-auto w-14 h-14 bg-[#1a1a1a] text-white flex items-center justify-center shadow-2xl hover:bg-[#c9a962] transition-colors duration-500 rounded-sm"
+        className="pointer-events-auto w-12 h-12 sm:w-14 sm:h-14 bg-[#1a1a1a] text-white flex items-center justify-center shadow-2xl hover:bg-[#c9a962] transition-colors duration-500 rounded-sm"
         aria-label="Accessibility menu"
       >
-        <Accessibility size={24} />
+        <Settings size={24} />
       </motion.button>
     </div>
   );

@@ -188,7 +188,7 @@ function CurriculumCard({ year, terms, index }: { year: string; terms: Record<st
               <p className="text-[10px] tracking-[0.2em] uppercase text-[#a1a1aa] mt-8 font-medium">
                  Comprehensive Curriculum Structure
               </p>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-12 mt-4">
                 {Object.entries(terms).map(([term, topics]) => (
                   <div key={term} className="pt-8">
                     <h4 className="text-[10px] tracking-[0.3em] uppercase text-[#c9a962] font-bold mb-6">{term}</h4>
@@ -215,7 +215,7 @@ function MethodSection() {
   const experiences = [
     {
       title: "Structured Theory Lessons",
-      description: "Expert-led classes delivering the full term's content in structured 1-2 hour sessions.",
+      description: "Expert-led classes delivering content in structured 1-2 hour sessions.",
     },
     {
       title: "Varied Resources",
@@ -253,13 +253,13 @@ function MethodSection() {
             <span className="text-xs tracking-[0.4em] uppercase text-[#c9a962] font-bold block mb-6">
               Our Methodology
             </span>
-            <h2 className="font-serif text-5xl lg:text-7xl text-[#1a1a1a] leading-tight mb-8">
+            <h2 className="font-serif text-3xl sm:text-5xl lg:text-7xl text-[#1a1a1a] leading-tight mb-8">
               The <span className="italic font-light">ViGyanIT</span> <br /> Advantage
             </h2>
           </motion.div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-12 lg:gap-16">
           {experiences.map((exp, index) => (
             <motion.div
               key={exp.title}
@@ -334,11 +334,11 @@ export default function ProgramsPage() {
             <span className="text-[10px] tracking-[0.4em] uppercase text-[#c9a962] font-bold block mb-8">
               Academic Curriculae
             </span>
-            <h1 className="font-serif text-6xl lg:text-8xl text-[#1a1a1a] leading-[0.9] mb-10">
+            <h1 className="font-serif text-4xl sm:text-6xl lg:text-8xl text-[#1a1a1a] leading-[0.9] mb-8 sm:mb-10">
               Grade-by-Grade <br />
               <span className="italic font-light text-[#c9a962]">Mastery</span>
             </h1>
-            <p className="text-[#71717a] text-xl lg:text-2xl leading-relaxed max-w-2xl font-light">
+            <p className="text-[#71717a] text-sm sm:text-base md:text-lg lg:text-xl leading-relaxed max-w-2xl font-light">
               Explore our meticulously architected pathways designed to transform 
               potential into profound understanding across every discipline.
             </p>
@@ -408,14 +408,14 @@ export default function ProgramsPage() {
             viewport={{ once: true }}
             transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
           >
-            <h2 className="font-serif text-6xl md:text-8xl lg:text-9xl text-[#1a1a1a] leading-none mb-12">
+            <h2 className="font-serif text-4xl sm:text-6xl md:text-8xl lg:text-9xl text-[#1a1a1a] leading-none mb-10 sm:mb-12">
               Ready to <br />
               <span className="italic font-light text-[#c9a962]">Achieve?</span>
             </h2>
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
               <Link
                 href="/enrol"
-                className="px-14 py-6 text-xs tracking-[0.4em] uppercase bg-[#1a1a1a] text-[#fafaf9] hover:bg-[#c9a962] transition-colors duration-500 shadow-xl"
+                className="px-8 sm:px-14 py-4 sm:py-6 text-xs tracking-[0.4em] uppercase bg-[#1a1a1a] text-[#fafaf9] hover:bg-[#c9a962] transition-colors duration-500 shadow-xl"
               >
                 Enrol Now
               </Link>

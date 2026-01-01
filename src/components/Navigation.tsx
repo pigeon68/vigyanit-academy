@@ -42,13 +42,14 @@ export function Navigation() {
           }`}
         >
           <nav className="max-w-[1400px] mx-auto px-6 lg:px-12">
-            <div className="flex items-center justify-between h-20 lg:h-24">
+            <div className="flex items-center justify-between h-16 sm:h-20 lg:h-24">
                   <Link href="/" className="group flex items-center gap-3">
-                    <div className="w-64 h-24 relative">
+                    <div className="w-32 h-12 sm:w-48 sm:h-16 lg:w-64 lg:h-24 relative">
                       <Image
                         src="/logo.png"
                         alt="Logo"
                         fill
+                        sizes="(max-width: 640px) 128px, (max-width: 1024px) 192px, 256px"
                         className="object-contain"
                       />
                     </div>

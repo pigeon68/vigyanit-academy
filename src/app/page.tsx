@@ -51,7 +51,7 @@ function HeroSection() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
-          className="font-serif text-6xl md:text-8xl lg:text-9xl text-[#1a1a1a] leading-[1] tracking-tight mb-10"
+          className="font-serif text-4xl sm:text-6xl md:text-8xl lg:text-9xl text-[#1a1a1a] leading-[1] tracking-tight mb-10"
         >
           Your Gateway to 
           <br />
@@ -62,7 +62,7 @@ function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.6 }}
-          className="max-w-2xl mx-auto text-[#1a1a1a] text-lg lg:text-xl leading-relaxed mb-16 font-medium"
+          className="max-w-2xl mx-auto text-[#1a1a1a] text-sm sm:text-base md:text-lg lg:text-xl leading-relaxed mb-10 sm:mb-16 font-medium"
         >
           A sanctuary for intellectual growth, where methodology meets mentorship to cultivate the next generation of visionaries.
         </motion.p>
@@ -75,7 +75,7 @@ function HeroSection() {
         >
           <Link
             href="/enrol"
-            className="group relative px-12 py-5 text-xs tracking-[0.3em] uppercase bg-[#1a1a1a] text-[#fafaf9] overflow-hidden"
+            className="group relative px-6 sm:px-12 py-3 sm:py-5 text-xs tracking-[0.3em] uppercase bg-[#1a1a1a] text-[#fafaf9] overflow-hidden"
           >
             <span className="relative z-10 transition-colors duration-500 group-hover:text-[#fafaf9]">
               Begin Journey
@@ -84,7 +84,7 @@ function HeroSection() {
           </Link>
           <Link
             href="/programs"
-            className="px-12 py-5 text-xs tracking-[0.3em] uppercase border border-[#e5e5e5] text-[#1a1a1a] hover:border-[#c9a962] hover:text-[#c9a962] transition-all duration-500"
+            className="px-6 sm:px-12 py-3 sm:py-5 text-xs tracking-[0.3em] uppercase border border-[#e5e5e5] text-[#1a1a1a] hover:border-[#c9a962] hover:text-[#c9a962] transition-all duration-500"
           >
             Explore Programs
           </Link>
@@ -98,7 +98,7 @@ function StatsSection() {
   const stats = [
     { value: "24/7", label: "Support" },
     { value: "15+", label: "Tutors" },
-    { value: "2", label: "Physical Locations" }
+    { value: "2", label: "Physical Locations & Online LMS" }
   ];
 
   return (
@@ -175,29 +175,29 @@ function ProgramsPreview() {
               <span className="text-xs tracking-[0.4em] uppercase text-[#c9a962] font-bold block mb-6">
                 Academic Disciplines
               </span>
-              <h2 className="font-serif text-5xl lg:text-7xl text-[#1a1a1a] leading-tight mb-8">
+              <h2 className="font-serif text-3xl sm:text-5xl lg:text-7xl text-[#1a1a1a] leading-tight mb-8">
                 Build Your <br />
                 <span className="italic font-light">Academic Foundation</span>
               </h2>
-              <p className="text-[#71717a] text-lg leading-relaxed font-light mx-auto">
+              <p className="text-[#71717a] text-sm sm:text-base md:text-lg leading-relaxed font-light mx-auto">
                 Bespoke programs designed for the intellectually curious, focused on foundational mastery and advanced inquiry.
               </p>
             </motion.div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-12 max-w-5xl mx-auto">
             {programs.map((program, index) => (
-              <motion.div
-                key={program.title}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                className="group relative bg-[#c9a962] p-10 lg:p-12 border border-white/20 hover:border-white/40 transition-all duration-700 text-center"
-              >
+              <Link key={program.title} href="/programs">
+                <motion.div
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                  className="group relative bg-[#c9a962] p-6 sm:p-10 lg:p-12 border border-white/20 hover:border-white/40 transition-all duration-700 text-center cursor-pointer"
+                >
                 <div className="relative z-10 flex flex-col items-center">
                   <span className="text-xs text-white/60 mb-8 block font-medium tracking-widest">{program.number}</span>
-                  <h3 className="font-serif text-6xl lg:text-8xl text-white mb-4 transition-colors duration-500">
+                  <h3 className="font-serif text-4xl sm:text-6xl lg:text-8xl text-white mb-4 transition-colors duration-500">
                     {program.title}
                   </h3>
                   {program.comingSoon && (
@@ -207,14 +207,14 @@ function ProgramsPreview() {
                       </span>
                     </div>
                   )}
-                  <p className="text-white/90 mb-10 text-lg font-light leading-relaxed max-w-sm">
+                  <p className="text-white/90 mb-8 sm:mb-10 text-sm sm:text-base md:text-lg font-light leading-relaxed max-w-sm">
                     {program.description}
                   </p>
                   <div className="flex flex-wrap gap-3 justify-center">
                     {program.subjects.map((subject) => (
                       <span
                         key={subject}
-                        className="px-6 py-2 text-xs tracking-[0.2em] uppercase border border-white/30 text-white hover:border-white transition-all duration-500"
+                        className="px-3 sm:px-6 py-1 sm:py-2 text-[10px] sm:text-xs tracking-[0.2em] uppercase border border-white/30 text-white hover:border-white transition-all duration-500"
                       >
                         {subject}
                       </span>
@@ -222,7 +222,8 @@ function ProgramsPreview() {
                   </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-              </motion.div>
+                </motion.div>
+              </Link>
             ))}
           </div>
         </div>
@@ -235,7 +236,7 @@ function LearningExperienceSection() {
   const experiences = [
     {
       title: "Structured Theory Lessons",
-      description: "Expert-led classes delivering the full term's content in structured 1-2 hour sessions.",
+      description: "Expert-led classes delivering content in structured 1-2 hour sessions.",
     },
     {
       title: "Varied Resources",
@@ -358,14 +359,14 @@ function PhilosophySection() {
             </motion.div>
 
             <motion.div style={{ y }} className="relative w-full max-w-4xl">
-              <div className="aspect-[16/9] relative">
+              <div className="relative">
                 <div className="absolute inset-0 border border-[#e5e5e5] -translate-x-4 translate-y-4" />
-                <div className="absolute inset-0 bg-white shadow-[0_40px_100px_-20px_rgba(0,0,0,0.05)] overflow-hidden p-12 lg:p-24 flex items-center justify-center text-center">
-                  <div className="space-y-12">
-                    <div className="w-24 h-24 mx-auto border border-[#c9a962]/30 rounded-full flex items-center justify-center">
-                       <div className="w-16 h-16 border border-[#c9a962] rounded-full animate-[spin_20s_linear_infinite]" />
+                <div className="relative bg-white shadow-[0_40px_100px_-20px_rgba(0,0,0,0.05)] overflow-hidden p-8 sm:p-12 lg:p-16 xl:p-24 flex items-center justify-center text-center min-h-[400px] sm:min-h-[500px]">
+                  <div className="space-y-8 sm:space-y-12">
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto border border-[#c9a962]/30 rounded-full flex items-center justify-center">
+                       <div className="w-12 h-12 sm:w-16 sm:h-16 border border-[#c9a962] rounded-full animate-[spin_20s_linear_infinite]" />
                     </div>
-                    <blockquote className="font-serif text-3xl lg:text-5xl italic text-[#1a1a1a] leading-snug">
+                    <blockquote className="font-serif text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl italic text-[#1a1a1a] leading-snug">
                       "The mind is not a vessel to be filled, but a fire to be kindled."
                     </blockquote>
                     <cite className="block text-xs tracking-[0.4em] uppercase text-[#a1a1aa] font-medium not-italic">
@@ -386,7 +387,7 @@ function TestimonialsSection() {
   const testimonials = [
     {
       quote: "ViGyanIT transformed how I perceive challenges. It's not just tutoring; it's mentorship that builds genuine confidence.",
-      role: "Class of 2024",
+      role: "Class of 2025",
     },
     {
       quote: "The personalised attention here is unmatched. I transitioned from struggling in Physics to top of my class in months.",
@@ -394,7 +395,7 @@ function TestimonialsSection() {
     },
     {
       quote: "Strategic, rigorous, and inspiring. The environment invites you to do your absolute best alongside brilliant peers.",
-      role: "Medicine Candidate",
+      role: "Year 11 Student",
     },
   ];
 

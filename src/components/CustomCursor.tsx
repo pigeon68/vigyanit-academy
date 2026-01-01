@@ -7,6 +7,7 @@ export function CustomCursor() {
   const [mounted, setMounted] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [isClicking, setIsClicking] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const mouseX = useSpring(0, { stiffness: 500, damping: 28 });
   const mouseY = useSpring(0, { stiffness: 500, damping: 28 });
@@ -19,6 +20,24 @@ export function CustomCursor() {
 
     useEffect(() => {
       setMounted(true);
+      
+      // Detect mobile devices
+      const detectMobile = () => {
+        const hasTouch = () => {
+          return (
+            typeof window !== 'undefined' &&
+            (navigator.maxTouchPoints > 0 ||
+              navigator.msMaxTouchPoints > 0 ||
+              ('ontouchstart' in window))
+          );
+        };
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          typeof navigator !== 'undefined' ? navigator.userAgent : ''
+        );
+        return hasTouch() || isMobileDevice;
+      };
+      
+      setIsMobile(detectMobile());
       
       const checkStatus = () => {
         setShowSystemCursor(document.documentElement.classList.contains("show-cursor"));
@@ -72,7 +91,7 @@ export function CustomCursor() {
     };
   }, []);
 
-    if (!mounted || showSystemCursor) return null;
+    if (!mounted || showSystemCursor || isMobile) return null;
 
     return (
       <>
