@@ -227,6 +227,12 @@ export default function StudentPortal() {
           .or(`student_id.eq.${user.id},student_id.eq.${studentIdToUse}`)
           .order("date", { ascending: false });
 
+        // Normalize results course relation
+        const normalizedResults = (resultsData || []).map((result: any) => ({
+          ...result,
+          course: Array.isArray(result.course) ? result.course[0] : result.course,
+        }));
+
         const { data: messagesData } = await supabase
           .from("messages")
           .select(`id, content, created_at, sender:profiles!messages_sender_id_fkey (full_name)`)
@@ -240,7 +246,7 @@ export default function StudentPortal() {
           .order("created_at", { ascending: false });
 
 
-      setResults(resultsData || []);
+      setResults(normalizedResults);
       setMessages(messagesData || []);
       setAnnouncements(announcementsData || []);
       setLoading(false);
