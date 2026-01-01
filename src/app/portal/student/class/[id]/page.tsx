@@ -107,7 +107,7 @@ export default function StudentClassPage({ params }: { params: Promise<{ id: str
         const { data: scoresData } = await supabase
           .from("test_scores")
           .select("id, test_name, score, max_score, date")
-          .eq("course_id", clsData.course.id)
+          .eq("course_id", normalized.course.id)
           .eq("student_id", student.id)
           .order("date", { ascending: false });
         setScores(scoresData || []);
