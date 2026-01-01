@@ -206,7 +206,15 @@ export default function StudentPortal() {
             }
 
             const { data: contentData } = await query.order("uploaded_at", { ascending: false });
-            setClassContent(contentData || []);
+            
+            // Normalize course and class relations (Supabase returns arrays)
+            const normalized = (contentData || []).map((item: any) => ({
+              ...item,
+              course: Array.isArray(item.course) ? item.course[0] : item.course,
+              class: Array.isArray(item.class) ? item.class[0] : item.class,
+            }));
+            
+            setClassContent(normalized);
           }
         }
 
