@@ -239,6 +239,12 @@ export default function StudentPortal() {
           .eq("receiver_id", user.id)
           .order("created_at", { ascending: false });
 
+        // Normalize messages sender relation
+        const normalizedMessages = (messagesData || []).map((msg: any) => ({
+          ...msg,
+          sender: Array.isArray(msg.sender) ? msg.sender[0] : msg.sender,
+        }));
+
         const { data: announcementsData } = await supabase
           .from("announcements")
           .select("*")
@@ -247,7 +253,7 @@ export default function StudentPortal() {
 
 
       setResults(normalizedResults);
-      setMessages(messagesData || []);
+      setMessages(normalizedMessages);
       setAnnouncements(announcementsData || []);
       setLoading(false);
     }
