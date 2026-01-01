@@ -179,8 +179,18 @@ interface Course {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   async function loadTeachers() {
-    const { data } = await supabase.from("teachers").select(`id, profile_id, department, created_at, profile:profiles(full_name, email, plain_password)`).order("created_at", { ascending: false });
-    setTeachers(data || []);
+    const { data } = await supabase
+      .from("teachers")
+      .select(`id, profile_id, department, created_at, profile:profiles(full_name, email, plain_password)`) 
+      .order("created_at", { ascending: false });
+
+    const normalized: Teacher[] = (data || []).map((teacher: any) => ({
+      ...teacher,
+      // Supabase can return the aliased relation as an array; take the first entry when present.
+      profile: Array.isArray(teacher.profile) ? teacher.profile[0] : teacher.profile,
+    }));
+
+    setTeachers(normalized);
   }
 
   async function loadStudents() {
