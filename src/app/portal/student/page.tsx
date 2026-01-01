@@ -627,7 +627,7 @@ export default function StudentPortal() {
                               const isToday = day === calendarData.today.getDate() && calendarData.currentMonth === calendarData.today.getMonth();
                               const date = new Date(calendarData.currentYear, calendarData.currentMonth, day);
                               const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
-                              const hasClass = classEnrollments.some(e => e.class.day_of_week === dayOfWeek);
+                              const hasClass = classEnrolments.some(e => e.class.day_of_week === dayOfWeek);
 
                               return (
                                 <div 
