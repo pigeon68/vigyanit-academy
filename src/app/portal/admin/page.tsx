@@ -178,6 +178,15 @@ interface Course {
   const [searching, setSearching] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
+  const normalizeStudentRecord = (student: any): Student => ({
+    ...student,
+    profile: Array.isArray(student.profile) ? student.profile[0] : student.profile,
+    parents: (student.parents || []).map((parent: any) => ({
+      ...parent,
+      profile: Array.isArray(parent.profile) ? parent.profile[0] : parent.profile,
+    })),
+  });
+
   async function loadTeachers() {
     const { data } = await supabase
       .from("teachers")
@@ -217,8 +226,9 @@ interface Course {
         .order("created_at", { ascending: false });
       
       if (error) throw error;
-      
-      setSearchResults(data || []);
+
+      const normalized = (data || []).map(normalizeStudentRecord);
+      setSearchResults(normalized);
     } catch (err) {
       console.error("Load students failed:", err);
     } finally {
@@ -255,9 +265,10 @@ interface Course {
         
         if (error) throw error;
 
+        const normalized = (data || []).map(normalizeStudentRecord);
         const query = searchQuery.toLowerCase();
-        const filtered = (data || []).filter((s: any) => 
-          s.student_number?.toLowerCase().includes(query) || 
+        const filtered = normalized.filter((s: Student) =>
+          s.student_number?.toLowerCase().includes(query) ||
           s.profile?.full_name?.toLowerCase().includes(query)
         );
         
