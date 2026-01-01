@@ -26,7 +26,6 @@ interface Class {
       code: string;
       id: string;
     };
-    enrolments: any[];
   }
 
 interface Message {
@@ -86,11 +85,23 @@ export default function TeacherPortal() {
           `)
           .eq("teacher_id", teacher.id);
 
+        // Normalize course relations
+        const normalizedClasses = (classesData || []).map((cls: any) => ({
+          ...cls,
+          course: Array.isArray(cls.course) ? cls.course[0] : cls.course,
+        }));
+
         const { data: messagesData } = await supabase
           .from("messages")
           .select(`id, content, created_at, sender:profiles!messages_sender_id_fkey (full_name)`)
           .eq("receiver_id", user.id)
           .order("created_at", { ascending: false });
+
+        // Normalize message sender relations
+        const normalizedMessages = (messagesData || []).map((msg: any) => ({
+          ...msg,
+          sender: Array.isArray(msg.sender) ? msg.sender[0] : msg.sender,
+        }));
 
         const { data: announcementsData } = await supabase
           .from("announcements")
@@ -98,8 +109,8 @@ export default function TeacherPortal() {
           .in("target_role", ["teacher", "all"])
           .order("created_at", { ascending: false });
 
-        setClasses(classesData || []);
-        setMessages(messagesData || []);
+        setClasses(normalizedClasses);
+        setMessages(normalizedMessages);
         setAnnouncements(announcementsData || []);
         setLoading(false);
       }
