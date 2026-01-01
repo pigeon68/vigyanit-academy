@@ -62,9 +62,7 @@ function NetworkNodes() {
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
-            count={connections.length / 3}
-            array={connections}
-            itemSize={3}
+            args={[connections, 3]}
           />
         </bufferGeometry>
         <lineBasicMaterial
