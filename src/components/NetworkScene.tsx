@@ -43,7 +43,16 @@ function NetworkNodes() {
     }
     if (linesRef.current) {
       const time = state.clock.elapsedTime;
-      linesRef.current.material.opacity = 0.15 + Math.sin(time) * 0.1;
+      const material = linesRef.current.material;
+      if (Array.isArray(material)) {
+        material.forEach((mat) => {
+          if ('opacity' in mat) {
+            mat.opacity = 0.15 + Math.sin(time) * 0.1;
+          }
+        });
+      } else if ('opacity' in material) {
+        material.opacity = 0.15 + Math.sin(time) * 0.1;
+      }
     }
   });
 
