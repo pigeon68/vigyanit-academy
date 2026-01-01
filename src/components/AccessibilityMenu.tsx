@@ -19,7 +19,6 @@ export function AccessibilityMenu() {
         return (
           typeof window !== 'undefined' &&
           (navigator.maxTouchPoints > 0 ||
-            navigator.msMaxTouchPoints > 0 ||
             ('ontouchstart' in window))
         );
       };
