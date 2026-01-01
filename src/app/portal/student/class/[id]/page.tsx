@@ -78,7 +78,14 @@ export default function StudentClassPage({ params }: { params: Promise<{ id: str
         router.push("/portal/student");
         return;
       }
-      setClassData(clsData as any);
+
+      // Normalize course relation (Supabase returns array)
+      const normalized = {
+        ...clsData,
+        course: Array.isArray(clsData.course) ? clsData.course[0] : clsData.course,
+        teacher: clsData.teacher && Array.isArray(clsData.teacher) ? clsData.teacher[0] : clsData.teacher,
+      };
+      setClassData(normalized as any);
 
       // Fetch Student Record for scores
       const { data: student } = await supabase
@@ -92,7 +99,7 @@ export default function StudentClassPage({ params }: { params: Promise<{ id: str
         const { data: materialsData } = await supabase
           .from("class_content")
           .select("*")
-          .or(`class_id.eq.${classId},course_id.eq.${clsData.course.id}`)
+          .or(`class_id.eq.${classId},course_id.eq.${normalized.course.id}`)
           .order("uploaded_at", { ascending: false });
         setMaterials(materialsData || []);
 
