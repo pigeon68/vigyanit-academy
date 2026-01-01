@@ -571,7 +571,7 @@ export default function EnrolPage() {
                                 >
                                     {addressSuggestions.map((suggestion, i) => {
                                       const { address, display_name } = suggestion;
-                                      const parts = display_name.split(', ');
+                                      const parts: string[] = display_name.split(', ');
                                       const queryInput = enrolmentData.parent.address.trim();
                                       const queryMatch = queryInput.match(/^(\d+[a-zA-Z0-9\-\/]*)/);
                                       const queryNumber = queryMatch ? queryMatch[1] : "";
@@ -589,7 +589,9 @@ export default function EnrolPage() {
                                       if (houseNumber) {
                                         const streetPart = street || (!/^\d/.test(parts[0]) ? parts[0] : parts[1]);
                                         mainAddress = `${houseNumber} ${streetPart}`;
-                                        subAddress = parts.filter(p => p !== houseNumber && p !== streetPart && p !== address.house_number).join(', ');
+                                        subAddress = parts
+                                          .filter((part: string) => part !== houseNumber && part !== streetPart && part !== address.house_number)
+                                          .join(', ');
                                       } else {
                                         mainAddress = parts[0];
                                         subAddress = parts.slice(1).join(', ');
