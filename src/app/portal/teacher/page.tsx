@@ -480,7 +480,7 @@ export default function TeacherPortal() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                          {selectedCourse.enrolments.map((enrolment, idx) => (
+                          {selectedCourse.enrolments.map((enrolment: any, idx: number) => (
                             <tr key={enrolment.student.id} className="hover:bg-gray-50 transition-colors">
                               <td className="px-6 py-4 text-sm text-gray-400">{idx + 1}</td>
                               <td className="px-6 py-4">
