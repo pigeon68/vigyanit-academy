@@ -187,6 +187,18 @@ interface Course {
     })),
   });
 
+  const normalizeClassRecord = (cls: any): Class => ({
+    ...cls,
+    course: Array.isArray(cls.course) ? cls.course[0] : cls.course,
+    teacher: cls.teacher && Array.isArray(cls.teacher) ? cls.teacher[0] : cls.teacher,
+  });
+
+  const normalizeTrialLessonRecord = (trial: any): TrialLesson => ({
+    ...trial,
+    course: Array.isArray(trial.course) ? trial.course[0] : trial.course,
+    class: Array.isArray(trial.class) ? trial.class[0] : trial.class,
+  });
+
   async function loadTeachers() {
     const { data } = await supabase
       .from("teachers")
@@ -304,9 +316,11 @@ interface Course {
       
       if (error) {
         const { data: fallback } = await supabase.from("classes").select("*, course:courses(name)").order("day_of_week", { ascending: true });
-        setClasses(fallback || []);
+        const normalized = (fallback || []).map(normalizeClassRecord);
+        setClasses(normalized);
       } else {
-        setClasses(data || []);
+        const normalized = (data || []).map(normalizeClassRecord);
+        setClasses(normalized);
       }
     } catch (err) {
       console.error("Exception in loadClasses:", err);
@@ -324,7 +338,10 @@ interface Course {
           .order("created_at", { ascending: false });
         
         if (error) console.error("Load trials failed:", error);
-        else setTrialLessons(data || []);
+        else {
+          const normalized = (data || []).map(normalizeTrialLessonRecord);
+          setTrialLessons(normalized);
+        }
       }
 
       async function loadContacts() {
