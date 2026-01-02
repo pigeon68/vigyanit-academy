@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 const portalRoleMap: Record<string, string> = {
   "/portal/admin": "admin",
@@ -10,9 +9,8 @@ const portalRoleMap: Record<string, string> = {
 };
 
 function applyCookies(target: NextResponse, source: NextResponse) {
-  source.cookies.getAll().forEach(({ name, value, options }) =>
-    target.cookies.set(name, value, options)
-  );
+  // Mirror cookies returned from Supabase helper onto the response
+  source.cookies.getAll().forEach(({ name, value }) => target.cookies.set(name, value));
   return target;
 }
 
@@ -82,11 +80,5 @@ export const config = {
      * - favicon.ico (favicon file)
      */
     "/((?!_next/static|_next/image|favicon.ico).*)",
-  ],
-};
-
-export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
