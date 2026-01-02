@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-// Use the Stripe API version supported by the current stripe package typings
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
-});
+// Use default API version to satisfy Stripe typings during build
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 function getGranularPrice(courseName: string): number {
   const name = courseName.toLowerCase();
