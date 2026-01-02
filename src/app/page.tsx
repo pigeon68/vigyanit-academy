@@ -51,7 +51,7 @@ function HeroSection() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
-          className="font-serif text-4xl sm:text-6xl md:text-8xl lg:text-9xl text-[#1a1a1a] leading-[1] tracking-tight mb-10"
+          className="font-serif text-5xl sm:text-7xl md:text-8xl lg:text-9xl text-[#1a1a1a] leading-[1] tracking-tight mb-10"
         >
           Your Gateway to 
           <br />
@@ -193,9 +193,9 @@ function ProgramsPreview() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 1, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                  className="group relative bg-[#c9a962] p-6 sm:p-10 lg:p-12 border border-white/20 hover:border-white/40 transition-all duration-700 text-center cursor-pointer"
+                  className="group relative bg-[#c9a962] p-6 sm:p-10 lg:p-12 border border-white/20 hover:border-white/40 transition-all duration-700 text-center cursor-pointer h-full flex flex-col"
                 >
-                <div className="relative z-10 flex flex-col items-center">
+                <div className="relative z-10 flex flex-col items-center flex-grow justify-between">
                   <span className="text-xs text-white/60 mb-8 block font-medium tracking-widest">{program.number}</span>
                   <h3 className="font-serif text-4xl sm:text-6xl lg:text-8xl text-white mb-4 transition-colors duration-500">
                     {program.title}

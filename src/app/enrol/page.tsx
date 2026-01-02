@@ -52,7 +52,10 @@ interface EnrolmentData {
 
 const subjectsList = [
   "Mathematics",
-  "Science"
+  "Science (Year 7 - 10)",
+  "Physics",
+  "Chemistry",
+  "Biology"
 ];
 
 export default function EnrolPage() {
@@ -228,9 +231,18 @@ export default function EnrolPage() {
   useEffect(() => {
     async function loadAcademicData() {
       const { data: courses } = await supabase.from("courses").select("*");
-      const { data: classes } = await supabase.from("classes").select(`*, course:courses(name)`);
+      const { data: classData } = await supabase.from("classes").select("*").order("day_of_week").order("start_time");
+      
+      // Manually enrich classes with course data
+      const coursesMap = new Map(courses?.map(c => [c.id, c]) || []);
+      const enrichedClasses = classData?.map(cls => ({
+        ...cls,
+        course: coursesMap.get(cls.course_id) || { name: "Unknown" }
+      })) || [];
+      
+      console.log("Loaded classes count on enrol page:", enrichedClasses.length);
       setDbCourses(courses || []);
-      setDbClasses(classes || []);
+      setDbClasses(enrichedClasses);
     }
     loadAcademicData();
   }, [supabase]);
@@ -348,7 +360,11 @@ export default function EnrolPage() {
         body: JSON.stringify(enrolmentData),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Enrolment failed");
+      if (!res.ok) {
+        const message = result.error || result.detail || "Enrolment failed";
+        console.error("Enrolment failed", result);
+        throw new Error(message);
+      }
 
       if (enrolmentData.paymentMethod === 'stripe') {
         const checkoutRes = await fetch("/api/checkout", {
@@ -423,15 +439,23 @@ export default function EnrolPage() {
               
               // If course changed, reset class and update price
               if (field === 'courseId') {
-                const course = dbCourses.find(c => c.id === value);
+                // Handle synthetic course values with year suffix (courseId|yearX)
+                const courseId = typeof value === 'string' && value.includes('|year') ? value.split('|')[0] : value;
+                const course = dbCourses.find(c => c.id === courseId);
                 updated.courseName = course?.name || "";
                 updated.classId = "";
                 updated.className = "";
                 
                 // Pricing logic
-                if (course) {
+                // Rule: Year 7-10 classes AND Year 11 Standard AND Year 12 Standard 1 => $450; everything else $750
+                const isSyntheticYear = typeof value === 'string' && value.includes('|year');
+                const yearNumber = isSyntheticYear ? parseInt(value.split('|')[1].replace('year', ''), 10) : undefined;
+                if (yearNumber && yearNumber >= 7 && yearNumber <= 10) {
+                  updated.price = 450;
+                } else if (course) {
                   const name = course.name.toLowerCase();
-                  if (name.includes("year 7") || name.includes("year 8") || name.includes("year 9") || name.includes("year 10")) {
+                  // Default for course-level pricing when not synthetic
+                  if (name.includes('standard') && (name.includes('year 11') || name.includes('year 12 standard 1'))) {
                     updated.price = 450;
                   } else {
                     updated.price = 750;
@@ -444,6 +468,22 @@ export default function EnrolPage() {
               if (field === 'classId') {
                 const cls = dbClasses.find(c => c.id === value);
                 updated.className = cls?.name || "";
+                // Always set pricing based on class name rules
+                if (cls) {
+                  const n = cls.name.toLowerCase();
+                  if (
+                    n.includes('year 7') ||
+                    n.includes('year 8') ||
+                    n.includes('year 9') ||
+                    n.includes('year 10') ||
+                    n.includes('year 11 standard') ||
+                    n.includes('year 12 standard 1')
+                  ) {
+                    updated.price = 450;
+                  } else {
+                    updated.price = 750;
+                  }
+                }
               }
               
               return updated;
@@ -741,18 +781,47 @@ export default function EnrolPage() {
                               className={inputClasses}
                             >
                               <option value="">Select a Course</option>
-                              {dbCourses
-                                .filter(c => {
-                                  const name = c.name.toLowerCase();
-                                  const subject = selection.subject.toLowerCase();
-                                  if (subject === 'science') {
-                                    return name.includes('science') || name.includes('biology') || name.includes('chemistry') || name.includes('physics');
-                                  }
-                                  return name.includes(subject);
-                                })
-                                .map(course => (
-                                  <option key={course.id} value={course.id}>{course.name}</option>
-                                ))
+
+                              {/* Special handling for Mathematics: show Year 7-12 buckets */}
+                              {selection.subject.toLowerCase().includes('mathematics')
+                                ? (() => {
+                                    const mathCourse = dbCourses.find(c => c.name.toLowerCase() === 'mathematics');
+                                    if (!mathCourse) return null;
+                                    return [7, 8, 9, 10, 11, 12].map(year => (
+                                      <option key={`${mathCourse.id}-m-${year}`} value={`${mathCourse.id}|year${year}`}>
+                                        {`Year ${year} Mathematics`}
+                                      </option>
+                                    ));
+                                  })()
+
+                                /* Special handling for Science (Year 7 - 10): show Year 7-10 course buckets */
+                                : selection.subject.toLowerCase().includes('science') && selection.subject.toLowerCase().includes('year')
+                                  ? (() => {
+                                      const scienceCourse = dbCourses.find(c => c.name.toLowerCase() === 'science');
+                                      if (!scienceCourse) return null;
+                                      return [7, 8, 9, 10].map(year => (
+                                        <option key={`${scienceCourse.id}-${year}`} value={`${scienceCourse.id}|year${year}`}>
+                                          {`Year ${year} Science`}
+                                        </option>
+                                      ));
+                                    })()
+
+                                  : dbCourses
+                                      .filter(c => {
+                                        const name = c.name.toLowerCase();
+                                        const subject = selection.subject.toLowerCase();
+                                        
+                                        // For specific sciences, only show that subject's course
+                                        if (subject === 'physics' || subject === 'chemistry' || subject === 'biology') {
+                                          return name === subject;
+                                        }
+                                        
+                                        // For mathematics and general cases
+                                        return name.includes(subject);
+                                      })
+                                      .map(course => (
+                                        <option key={course.id} value={course.id}>{course.name}</option>
+                                      ))
                               }
                             </select>
                           </div>
@@ -767,10 +836,27 @@ export default function EnrolPage() {
                             >
                               <option value="">Select a Class</option>
                               {dbClasses
-                                .filter(cls => cls.course_id === selection.courseId)
-                                .map(cls => (
-                                  <option key={cls.id} value={cls.id}>{cls.name} ({cls.day_of_week} {cls.start_time})</option>
-                                ))
+                                .filter(cls => {
+                                  // Handle Year-bucket synthetic course values "courseId|yearX" for Math and Science
+                                  if (selection.courseId && selection.courseId.includes('|year')) {
+                                    const [courseId, yearTag] = selection.courseId.split('|');
+                                    const matchesCourse = cls.course_id === courseId;
+                                    const yearNum = yearTag.replace('year', '');
+                                    const matchesYear = cls.name.toLowerCase().includes(`year ${yearNum}`);
+                                    return matchesCourse && matchesYear;
+                                  }
+                                  return cls.course_id === selection.courseId;
+                                })
+                                .map(cls => {
+                                  // For Physics/Chemistry/Biology, strip subject name and show only year level
+                                  let displayName = cls.name;
+                                  if (cls.name.includes('Physics') || cls.name.includes('Chemistry') || cls.name.includes('Biology')) {
+                                    displayName = cls.name.replace(/Physics|Chemistry|Biology/gi, '').trim();
+                                  }
+                                  return (
+                                    <option key={cls.id} value={cls.id}>{displayName} ({cls.day_of_week} {cls.start_time})</option>
+                                  );
+                                })
                               }
                             </select>
                           </div>

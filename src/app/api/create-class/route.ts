@@ -4,9 +4,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { course_id, name, code, day_of_week, start_time, end_time, room } = body;
+    const { course_id, name, day_of_week, start_time, end_time, room } = body;
 
-    if (!course_id || !name || !code || !day_of_week || !start_time || !end_time) {
+    if (!course_id || !name || !day_of_week || !start_time || !end_time) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
@@ -15,12 +15,55 @@ export async function POST(request: Request) {
 
     const supabase = createAdminClient();
 
+    const { data: course, error: courseError } = await supabase
+      .from("courses")
+      .select("code")
+      .eq("id", course_id)
+      .single();
+
+    if (courseError || !course?.code) {
+      return NextResponse.json(
+        { success: false, error: "Course not found for class generation" },
+        { status: 400 }
+      );
+    }
+
+    const normalizeDay = (value: string) => {
+      const map: Record<string, string> = {
+        monday: "MON",
+        tuesday: "TUE",
+        wednesday: "WED",
+        thursday: "THU",
+        friday: "FRI",
+        saturday: "SAT",
+        sunday: "SUN",
+      };
+      const key = value.toLowerCase();
+      return map[key] || value.slice(0, 3).toUpperCase();
+    };
+
+    const startCode = String(start_time).replace(":", "");
+    const baseCode = [course.code, normalizeDay(day_of_week), startCode].filter(Boolean).join("-");
+
+    const { data: existingCodes } = await supabase
+      .from("classes")
+      .select("code")
+      .ilike("code", `${baseCode}%`);
+
+    const taken = new Set((existingCodes || []).map((c) => c.code));
+    let finalCode = baseCode;
+    let suffix = 1;
+    while (taken.has(finalCode)) {
+      finalCode = `${baseCode}-${suffix}`;
+      suffix += 1;
+    }
+
     const { data, error } = await supabase
       .from("classes")
       .insert({
         course_id,
         name,
-        code,
+        code: finalCode,
         day_of_week,
         start_time,
         end_time,

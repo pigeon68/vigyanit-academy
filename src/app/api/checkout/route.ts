@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 // Use the Stripe API version supported by the current stripe package typings
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-12-15.clover",
+  apiVersion: "2023-10-16",
 });
 
 function getGranularPrice(courseName: string): number {

@@ -112,7 +112,8 @@ export function CustomCursor() {
           }}
           animate={{
             scale: isClicking ? 0.8 : isHovering ? 1.5 : 1,
-            backgroundColor: isHovering ? "rgba(201, 169, 98, 0.4)" : "transparent",
+            // Use alpha instead of "transparent" to avoid framer-motion warnings
+            backgroundColor: isHovering ? "rgba(201, 169, 98, 0.4)" : "rgba(201, 169, 98, 0)",
             borderColor: highContrast ? "#ffff00" : "#c9a962",
           }}
         />

@@ -62,6 +62,12 @@ const mathCurriculum = {
     "Term 2": ["Calculus (Differentiation and Integration) (Continued)", "Further Vectors (Projectile Motion)"],
     "Term 3": ["Further Vectors (Projectile Motion) (Continued)", "Past Papers"],
   },
+  "Year 12 Extension 2 Mathematics": {
+    "Term 4 (Year 11)": ["Complex Numbers", "Proofs (Induction)"],
+    "Term 1": ["Calculus (Differentiation and Integration)", "Vectors"],
+    "Term 2": ["Mechanics"],
+    "Term 3": ["Mechanics (Continued)", "Past Papers"],
+  },
   "Year 11 Standard Mathematics": {
     "Term 4 (Year 10)": ["Algebraic Techniques", "Indices", "Area and Volume", "Financial Mathematics", "Right Angled Trigonometry", "Scientific Figures and Scientific Notation"],
     "Term 1": ["Algebra", "Earning and Managing Money", "Perimeter, Area and Volume"],

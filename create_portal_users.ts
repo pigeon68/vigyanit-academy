@@ -1,4 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
+import { config } from "dotenv";
+
+config({ path: ".env.local" });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -16,7 +19,7 @@ async function createUser(email: string, role: string, fullName: string, extraDa
   // 1. Create Auth User
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,
-    password: "Orchids2025!",
+    password: "VigyanIT#2025@Secure!",
     email_confirm: true,
   });
 
@@ -81,10 +84,10 @@ async function insertProfile(id: string, email: string, role: string, fullName: 
 }
 
 async function main() {
-  await createUser("admin@orchids.com", "admin", "Admin User");
-  await createUser("teacher_test@orchids.com", "teacher", "Teacher Test", { department: "Mathematics" });
-  await createUser("parent_test@orchids.com", "parent", "Parent Test");
-  await createUser("student_test@orchids.com", "student", "Student Test");
+  await createUser("office@vigyanitacademy.com", "admin", "Vigyanit Academy Admin");
+  await createUser("teacher_test@vigyanitacademy.com", "teacher", "Teacher Test", { department: "Mathematics" });
+  await createUser("parent_test@vigyanitacademy.com", "parent", "Parent Test");
+  await createUser("student_test@vigyanitacademy.com", "student", "Student Test");
 }
 
 main();

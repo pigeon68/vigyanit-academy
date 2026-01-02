@@ -36,6 +36,63 @@ CREATE TABLE IF NOT EXISTS students (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Create courses table
+CREATE TABLE IF NOT EXISTS courses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  code TEXT UNIQUE NOT NULL,
+  description TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create classes table
+CREATE TABLE IF NOT EXISTS classes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  teacher_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  name TEXT NOT NULL,
+  code TEXT UNIQUE NOT NULL,
+  day_of_week TEXT NOT NULL,
+  start_time TEXT NOT NULL,
+  end_time TEXT NOT NULL,
+  room TEXT DEFAULT 'Main Hall',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create trial_lessons table
+CREATE TABLE IF NOT EXISTS trial_lessons (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  parent_name TEXT NOT NULL,
+  parent_email TEXT NOT NULL,
+  parent_phone TEXT NOT NULL,
+  student_name TEXT NOT NULL,
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  class_id UUID REFERENCES classes(id) ON DELETE SET NULL,
+  status TEXT DEFAULT 'pending',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create announcements table
+CREATE TABLE IF NOT EXISTS announcements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  target_role TEXT,
+  type TEXT,
+  priority TEXT DEFAULT 'normal',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create contacts table
+CREATE TABLE IF NOT EXISTS contacts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT,
+  message TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Enable RLS (Optional, but good practice. For now keeping it simple as per guidelines)
 -- ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE teachers ENABLE ROW LEVEL SECURITY;

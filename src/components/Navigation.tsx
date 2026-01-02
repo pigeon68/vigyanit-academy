@@ -83,8 +83,8 @@ export function Navigation() {
                   aria-expanded={isMobileMenuOpen}
                 >
                 <span
-                  className={`w-6 h-px bg-[#1a1a1a] transition-all duration-300 ${
-                    isMobileMenuOpen ? "rotate-45 translate-y-1" : ""
+                  className={`w-6 h-px bg-[#1a1a1a] transition-all duration-300 origin-center ${
+                    isMobileMenuOpen ? "rotate-45 translate-y-2" : ""
                   }`}
                 />
                 <span
@@ -93,7 +93,7 @@ export function Navigation() {
                   }`}
                 />
                 <span
-                  className={`w-6 h-px bg-[#1a1a1a] transition-all duration-300 ${
+                  className={`w-6 h-px bg-[#1a1a1a] transition-all duration-300 origin-center ${
                     isMobileMenuOpen ? "-rotate-45 -translate-y-2" : ""
                   }`}
                 />

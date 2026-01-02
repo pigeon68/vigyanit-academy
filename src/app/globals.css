@@ -109,36 +109,16 @@
 
   /* Accessibility Modes */
   .high-contrast {
-    --background: #000000 !important;
-    --foreground: #ffffff !important;
-    --primary: #ffff00 !important;
-    --border: #ffffff !important;
-    --muted: #1a1a1a !important;
-    --muted-foreground: #ffffff !important;
-  }
-
-  .high-contrast * {
-    background-color: #000000 !important;
-    color: #ffffff !important;
-    border-color: #ffffff !important;
-    outline-color: #ffff00 !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-  }
-
-  .high-contrast a, 
-  .high-contrast button,
-  .high-contrast [role="button"] {
-    background-color: #000000 !important;
-    color: #ffff00 !important;
-    border: 2px solid #ffff00 !important;
-    text-decoration: underline !important;
-  }
-
-  .high-contrast a:hover, 
-  .high-contrast button:hover {
-    background-color: #ffff00 !important;
+    filter: invert(1) !important;
+    background-color: #ffffff !important;
     color: #000000 !important;
+  }
+
+  .high-contrast img,
+  .high-contrast video,
+  .high-contrast canvas,
+  .high-contrast svg {
+    filter: invert(1) !important;
   }
 
   .dyslexic-font,

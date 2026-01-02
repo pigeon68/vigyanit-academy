@@ -145,7 +145,6 @@ interface Course {
   const [newClass, setNewClass] = useState({ 
     course_id: "", 
     name: "", 
-    code: "", 
     day_of_week: "Monday", 
     start_time: "16:30", 
     end_time: "17:30",
@@ -190,7 +189,6 @@ interface Course {
   const normalizeClassRecord = (cls: any): Class => ({
     ...cls,
     course: Array.isArray(cls.course) ? cls.course[0] : cls.course,
-    teacher: cls.teacher && Array.isArray(cls.teacher) ? cls.teacher[0] : cls.teacher,
   });
 
   const normalizeTrialLessonRecord = (trial: any): TrialLesson => ({
@@ -305,23 +303,35 @@ interface Course {
 
   async function loadClasses() {
     try {
-      const { data, error } = await supabase
+      // Fetch classes without join to avoid filtering
+      const { data: classData, error } = await supabase
         .from("classes")
-        .select(`
-          id, course_id, teacher_id, name, code, day_of_week, start_time, end_time, room,
-          course:courses(name, code),
-          teacher:teachers(profile:profiles(full_name))
-        `)
-        .order("day_of_week", { ascending: true });
+        .select("*")
+        .order("day_of_week", { ascending: true })
+        .order("start_time", { ascending: true });
       
       if (error) {
-        const { data: fallback } = await supabase.from("classes").select("*, course:courses(name)").order("day_of_week", { ascending: true });
-        const normalized = (fallback || []).map(normalizeClassRecord);
-        setClasses(normalized);
-      } else {
-        const normalized = (data || []).map(normalizeClassRecord);
-        setClasses(normalized);
+        console.error("loadClasses error:", error);
+        setClasses([]);
+        return;
       }
+
+      // Fetch all courses
+      const { data: courseData } = await supabase
+        .from("courses")
+        .select("id, name, code");
+      
+      const coursesMap = new Map(courseData?.map(c => [c.id, c]) || []);
+      
+      // Manually join course data
+      const enriched = (classData || []).map(cls => ({
+        ...cls,
+        course: coursesMap.get(cls.course_id) || { name: "Unknown", code: "N/A" }
+      }));
+      
+      console.log("Loaded classes count:", enriched.length);
+      const normalized = enriched.map(normalizeClassRecord);
+      setClasses(normalized);
     } catch (err) {
       console.error("Exception in loadClasses:", err);
     }
@@ -422,7 +432,7 @@ interface Course {
       const result = await res.json();
       if (!result.success) throw new Error(result.error);
       setNewClass({ 
-        course_id: "", name: "", code: "", 
+        course_id: "", name: "", 
         day_of_week: "Monday", start_time: "16:30", 
         end_time: "17:30", room: "Main Hall" 
       });
@@ -786,17 +796,6 @@ interface Course {
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Class Code (Unique)</label>
-                              <input 
-                                type="text" 
-                                value={newClass.code} 
-                                onChange={(e) => setNewClass({...newClass, code: e.target.value})} 
-                                className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl outline-none" 
-                                placeholder="e.g. Y10-MATH-A"
-                                required 
-                              />
-                            </div>
-                            <div>
                               <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Day</label>
                               <select 
                                 value={newClass.day_of_week} 
@@ -808,9 +807,8 @@ interface Course {
                                   <option key={d} value={d}>{d}</option>
                                 ))}
                               </select>
+                              <p className="mt-2 text-xs text-gray-500">Class code auto-generates from subject, day, and start time.</p>
                             </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
                             <div>
                               <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Start Time</label>
                               <input 
@@ -821,6 +819,8 @@ interface Course {
                                 required 
                               />
                             </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
                             <div>
                               <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">End Time</label>
                               <input 
@@ -829,6 +829,16 @@ interface Course {
                                 onChange={(e) => setNewClass({...newClass, end_time: e.target.value})} 
                                 className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl outline-none" 
                                 required 
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Room (optional)</label>
+                              <input 
+                                type="text" 
+                                value={newClass.room} 
+                                onChange={(e) => setNewClass({...newClass, room: e.target.value})} 
+                                className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl outline-none" 
+                                placeholder="Main Hall"
                               />
                             </div>
                           </div>
@@ -905,13 +915,8 @@ interface Course {
                                   {c.day_of_week} {c.start_time} - {c.end_time}
                                 </td>
                                 <td className="px-8 py-6">
-                                  {c.teacher ? (
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-6 h-6 rounded-full bg-[#1a1a1a] text-[#c9a962] flex items-center justify-center text-[10px] font-bold">
-                                        {c.teacher.profile.full_name[0]}
-                                      </div>
-                                      <span className="text-sm font-medium">{c.teacher.profile.full_name}</span>
-                                    </div>
+                                  {c.teacher_id ? (
+                                    <span className="text-xs text-amber-600 italic font-medium tracking-wide">Assigned (ID: {c.teacher_id})</span>
                                   ) : (
                                     <span className="text-xs text-red-400 italic font-medium tracking-wide">Unassigned</span>
                                   )}
