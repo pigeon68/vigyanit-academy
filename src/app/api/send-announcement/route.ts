@@ -78,7 +78,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 });
+      const message = error.issues?.[0]?.message || "Invalid request";
+      return NextResponse.json({ error: message }, { status: 400 });
     }
     console.error("Send announcement API Error:", error);
     return NextResponse.json({ error: "Unable to send announcement." }, { status: 500 });
