@@ -263,16 +263,11 @@ export default function TrialLessonPage() {
                             className={inputClasses}
                           >
                             <option value="">Select a Course</option>
-
                             {/* Special handling for Mathematics: show Year 7-12 buckets */}
-                            {selectedSubject?.toLowerCase().includes('mathematics')
+                            {selectedSubject.toLowerCase().includes('mathematics')
                               ? (() => {
                                   const mathCourse = dbCourses.find(c => c.name.toLowerCase() === 'mathematics');
-                                  console.log("Math course found:", mathCourse, "All courses:", dbCourses);
-                                  if (!mathCourse) {
-                                    console.warn("No mathematics course found");
-                                    return <option value="">No Mathematics course available</option>;
-                                  }
+                                  if (!mathCourse) return null;
                                   return [7, 8, 9, 10, 11, 12].map(year => (
                                     <option key={`${mathCourse.id}-m-${year}`} value={`${mathCourse.id}|year${year}`}>
                                       {`Year ${year} Mathematics`}
@@ -281,14 +276,10 @@ export default function TrialLessonPage() {
                                 })()
 
                               /* Special handling for Science (Year 7 - 10): show Year 7-10 course buckets */
-                              : selectedSubject?.toLowerCase().includes('science') && selectedSubject?.toLowerCase().includes('year')
+                              : selectedSubject.toLowerCase().includes('science') && selectedSubject.toLowerCase().includes('year')
                                 ? (() => {
                                     const scienceCourse = dbCourses.find(c => c.name.toLowerCase() === 'science');
-                                    console.log("Science course found:", scienceCourse, "All courses:", dbCourses);
-                                    if (!scienceCourse) {
-                                      console.warn("No science course found");
-                                      return <option value="">No Science course available</option>;
-                                    }
+                                    if (!scienceCourse) return null;
                                     return [7, 8, 9, 10].map(year => (
                                       <option key={`${scienceCourse.id}-${year}`} value={`${scienceCourse.id}|year${year}`}>
                                         {`Year ${year} Science`}
@@ -296,10 +287,10 @@ export default function TrialLessonPage() {
                                     ));
                                   })()
 
-                                : (() => {
-                                    const filtered = dbCourses.filter(c => {
+                                : dbCourses
+                                    .filter(c => {
                                       const name = c.name.toLowerCase();
-                                      const subject = selectedSubject?.toLowerCase() || "";
+                                      const subject = selectedSubject.toLowerCase();
                                       
                                       // For specific sciences, only show that subject's course
                                       if (subject === 'physics' || subject === 'chemistry' || subject === 'biology') {
@@ -308,12 +299,10 @@ export default function TrialLessonPage() {
                                       
                                       // For mathematics and general cases
                                       return name.includes(subject);
-                                    });
-                                    console.log("Filtered courses for subject", selectedSubject, ":", filtered);
-                                    return filtered.map(course => (
+                                    })
+                                    .map(course => (
                                       <option key={course.id} value={course.id}>{course.name}</option>
-                                    ));
-                                  })()
+                                    ))
                             }
                           </select>
                         </div>
