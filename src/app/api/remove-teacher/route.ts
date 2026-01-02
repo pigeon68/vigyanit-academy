@@ -39,7 +39,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ success: false, error: error.errors[0].message }, { status: 400 });
+      const message = error.issues?.[0]?.message || "Invalid input";
+      return NextResponse.json({ success: false, error: message }, { status: 400 });
     }
     console.error("Teacher removal error:", error);
     return NextResponse.json(
