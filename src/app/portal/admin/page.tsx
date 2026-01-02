@@ -1612,7 +1612,7 @@ interface Course {
                                     {revealPassword ? "Not stored" : "••••••••"}
                                   </span>
                                   <button
-                                    onClick={() => setResetPassword({ type: 'parent', id: p.profile_id, name: p.profile?.full_name || 'Parent' })}
+                                    onClick={() => setResetPassword({ type: 'parent', id: (p as any).profile_id, name: p.profile?.full_name || 'Parent' })}
                                     className="text-[8px] uppercase tracking-widest px-2 py-1 bg-orange-100 text-orange-600 rounded hover:bg-orange-200 transition font-bold"
                                   >
                                     Reset
