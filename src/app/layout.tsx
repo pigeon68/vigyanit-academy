@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Syne } from "next/font/google";
 import "./globals.css";
-import { VisualEditsMessenger } from "orchids-visual-edits";
+
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { CustomCursor } from "@/components/CustomCursor";
 import { AccessibilityMenu } from "@/components/AccessibilityMenu";
@@ -36,18 +36,11 @@ export default function RootLayout({
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 65'><path d='M20 2L38 32.5L20 63L2 32.5L20 2Z' stroke='%23c9a962' stroke-width='2' fill='none'/><path d='M20 12L32 32.5L20 53L8 32.5L20 12Z' stroke='%23c9a962' stroke-width='1' fill='none'/></svg>" />
       </head>
       <body className="antialiased">
-        <Script
-          id="orchids-browser-logs"
-          src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts/orchids-browser-logs.js"
-          strategy="afterInteractive"
-          data-orchids-project-id="dc1515c1-0849-482e-aa50-1a20b7304def"
-        />
           <CustomCursor />
           <AccessibilityMenu />
           <SmoothScroll>
             {children}
           </SmoothScroll>
-        <VisualEditsMessenger />
       </body>
     </html>
   );

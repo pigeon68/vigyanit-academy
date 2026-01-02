@@ -33,18 +33,5 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    (request.nextUrl.pathname.startsWith("/portal") ||
-      request.nextUrl.pathname.startsWith("/student") ||
-      request.nextUrl.pathname.startsWith("/parent") ||
-      request.nextUrl.pathname.startsWith("/teacher"))
-  ) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
-
-  return supabaseResponse;
+  return { supabase, user, response: supabaseResponse };
 }

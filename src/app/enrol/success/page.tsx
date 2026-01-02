@@ -12,6 +12,8 @@ function SuccessContent() {
     const method = searchParams.get("method");
     const [amount, setAmount] = useState<string | null>(searchParams.get("amount"));
     const studentId = searchParams.get("studentId");
+    const studentNumber = searchParams.get("studentNumber");
+    const studentPassword = searchParams.get("studentPassword");
     const supabase = createClient();
 
     const isBankTransfer = method === 'bank_transfer';
@@ -93,6 +95,43 @@ function SuccessContent() {
                   <p className="text-[10px] text-[#71717a] mt-4 leading-relaxed italic">
                     * Important: Please include the Student Name as the payment reference. Your enrolment will be confirmed once the funds appear in our account (usually 1-2 business days).
                   </p>
+              </div>
+            </div>
+          )}
+
+          {studentNumber && studentPassword && (
+            <div className="bg-gray-900 text-[#c9a962] p-8 mb-10 rounded-lg border border-[#c9a962]/40">
+              <h3 className="text-[10px] tracking-[0.2em] uppercase font-bold mb-6">Student Portal Access</h3>
+              <div className="space-y-6">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-gray-300 mb-2">Student ID</p>
+                  <div className="flex items-center justify-between gap-2 bg-black/30 p-3 rounded">
+                    <span className="font-mono text-sm font-bold">{studentNumber}</span>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(studentNumber).catch(() => {})}
+                      className="text-[10px] uppercase tracking-[0.2em] px-2 py-1 bg-[#c9a962] text-white rounded hover:opacity-90 transition"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-gray-300 mb-2">First-Time Password</p>
+                  <div className="flex items-center justify-between gap-2 bg-black/30 p-3 rounded">
+                    <span className="font-mono text-sm font-bold">{studentPassword}</span>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(studentPassword).catch(() => {})}
+                      className="text-[10px] uppercase tracking-[0.2em] px-2 py-1 bg-[#c9a962] text-white rounded hover:opacity-90 transition"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+                <div className="border-t border-[#c9a962]/20 pt-4">
+                  <p className="text-[11px] text-gray-300 leading-relaxed">
+                    <strong>Important:</strong> Share these credentials with your student. On first login, they will be required to set a new password.
+                  </p>
+                </div>
               </div>
             </div>
           )}

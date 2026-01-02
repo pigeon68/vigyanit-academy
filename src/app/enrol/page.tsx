@@ -347,12 +347,12 @@ export default function EnrolPage() {
         localStorage.removeItem("enrolmentData");
         localStorage.removeItem("enrolmentStep");
         
-        window.location.href = checkoutResult.url;
+        window.location.href = checkoutResult.url + `&studentNumber=${encodeURIComponent(result.studentNumber)}&studentPassword=${encodeURIComponent(result.studentPassword)}`;
         } else {
           localStorage.removeItem("enrolmentData");
           localStorage.removeItem("enrolmentStep");
           
-          router.push(`/enrol/success?method=bank_transfer&studentId=${result.studentId}&amount=${calculateTotalPrice()}`);
+          router.push(`/enrol/success?method=bank_transfer&studentId=${result.studentId}&amount=${calculateTotalPrice()}&studentNumber=${encodeURIComponent(result.studentNumber)}&studentPassword=${encodeURIComponent(result.studentPassword)}`);
         }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Account creation failed.");
@@ -459,7 +459,7 @@ export default function EnrolPage() {
   const labelClasses = "text-[10px] tracking-[0.2em] uppercase text-[#a1a1aa] mb-1 block";
 
   return (
-    <main className="bg-[#fafaf9] min-h-screen flex items-center justify-center py-20 noise-overlay overflow-x-hidden">
+    <main className="bg-[#fafaf9] min-h-screen flex items-center justify-center py-20 noise-overlay">
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}

@@ -28,32 +28,45 @@ export default function TrialLessonPage() {
   const [dbClasses, setDbClasses] = useState<any[]>([]);
   const [selectedSubject, setSelectedSubject] = useState("");
 
+  const subjectsList = [
+    "Mathematics",
+    "Science (Year 7 - 10)",
+    "Physics",
+    "Chemistry",
+    "Biology"
+  ];
+
   useEffect(() => {
     async function loadData() {
       const { data: courses } = await supabase.from("courses").select("*");
-      const { data: classes } = await supabase.from("classes").select(`*, course:courses(name)`);
+      const { data: classes } = await supabase.from("classes").select("*").order("day_of_week").order("start_time");
+      
+      console.log("Trial Lesson - Loaded courses:", courses);
+      console.log("Trial Lesson - Loaded classes:", classes);
+      
+      const coursesMap = new Map(courses?.map(c => [c.id, c]) || []);
+      const enrichedClasses = classes?.map(cls => ({
+        ...cls,
+        course: coursesMap.get(cls.course_id) || { name: "Unknown" }
+      })) || [];
+      
       setDbCourses(courses || []);
-      setDbClasses(classes || []);
+      setDbClasses(enrichedClasses);
     }
     loadData();
   }, [supabase]);
 
-  const subjects = Array.from(new Set(dbCourses.map(c => {
-    if (c.name.toLowerCase().includes('math')) return 'Mathematics';
-    if (c.name.toLowerCase().includes('science') || c.name.toLowerCase().includes('phys') || c.name.toLowerCase().includes('chem') || c.name.toLowerCase().includes('bio')) return 'Science';
-    return c.name;
-  })));
-
-  const filteredCourses = dbCourses.filter(c => {
-    if (!selectedSubject) return false;
-    const s = selectedSubject.toLowerCase();
-    const n = c.name.toLowerCase();
-    if (s === 'mathematics') return n.includes('math');
-    if (s === 'science') return n.includes('science') || n.includes('phys') || n.includes('chem') || n.includes('bio');
-    return n.includes(s);
+  const filteredClasses = dbClasses.filter(cls => {
+    // Handle Year-bucket synthetic course values "courseId|yearX" for Math and Science
+    if (formData.courseId && formData.courseId.includes('|year')) {
+      const [courseId, yearTag] = formData.courseId.split('|');
+      const matchesCourse = cls.course_id === courseId;
+      const yearNum = yearTag.replace('year', '');
+      const matchesYear = cls.name.toLowerCase().includes(`year ${yearNum}`);
+      return matchesCourse && matchesYear;
+    }
+    return cls.course_id === formData.courseId;
   });
-
-  const filteredClasses = dbClasses.filter(cls => cls.course_id === formData.courseId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,73 +212,135 @@ export default function TrialLessonPage() {
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-10">
-                  <div>
-                    <label className={labelClasses}>Subject</label>
-                    <select 
-                      className={inputClasses}
-                      value={selectedSubject}
-                      onChange={e => {
-                        setSelectedSubject(e.target.value);
-                        setFormData({...formData, courseId: "", classId: ""});
-                      }}
-                      required
-                    >
-                      <option value="">Choose Subject</option>
-                      {subjects.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                <div className="mt-16 pt-12 border-t border-[#e5e5e5]">
+                  <h3 className="text-[10px] tracking-[0.3em] uppercase text-[#c9a962] font-bold mb-8">Subject Selection</h3>
+                  
+                  {/* Subject Toggle Buttons */}
+                  <div className="grid md:grid-cols-2 gap-4 mb-12">
+                    {subjectsList.map((subject) => (
+                      <button
+                        key={subject}
+                        type="button"
+                        onClick={() => {
+                          setSelectedSubject(subject);
+                          setFormData({...formData, courseId: "", classId: ""});
+                        }}
+                        className={`p-6 text-left border transition-all duration-300 flex justify-between items-center ${
+                          selectedSubject === subject
+                            ? 'border-[#c9a962] bg-[#c9a962]/5'
+                            : 'border-[#e5e5e5] hover:border-[#c9a962]/30 bg-white'
+                        }`}
+                      >
+                        <span className={`text-sm tracking-widest uppercase ${
+                          selectedSubject === subject ? 'text-[#1a1a1a] font-bold' : 'text-[#71717a]'
+                        }`}>
+                          {subject}
+                        </span>
+                        {selectedSubject === subject && (
+                          <div className="w-2 h-2 rounded-full bg-[#c9a962]" />
+                        )}
+                      </button>
+                    ))}
                   </div>
-                  <div>
-                    <label className={labelClasses}>Course</label>
-                    <select 
-                      className={inputClasses}
-                      value={formData.courseId}
-                      onChange={e => {
-                        setFormData({...formData, courseId: e.target.value, classId: ""});
-                      }}
-                      required
-                      disabled={!selectedSubject}
-                    >
-                      <option value="">{selectedSubject ? "Choose Program" : "Select Subject First"}</option>
-                      {filteredCourses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </div>
-                </div>
 
-                <div>
-                  <label className={labelClasses}>Available Class Times</label>
-                  {formData.courseId ? (
-                    <div className="grid sm:grid-cols-2 gap-4 mt-4">
-                      {filteredClasses.length === 0 ? (
-                        <div className="col-span-2 py-4 text-[#a1a1aa] text-sm italic">No scheduled classes available.</div>
-                      ) : (
-                        filteredClasses.map((cls) => (
-                          <label
-                            key={cls.id}
-                            className={`flex items-center gap-4 p-4 border cursor-pointer transition-all ${
-                              formData.classId === cls.id
-                                ? 'border-[#c9a962] bg-[#c9a962]/5'
-                                : 'border-[#e5e5e5] hover:border-[#c9a962]/50'
-                            }`}
+                  {/* Course & Class Selection */}
+                  {selectedSubject && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-8 border border-[#e5e5e5] bg-white relative"
+                    >
+                      <div className="absolute -top-3 left-6 bg-white px-4 text-[10px] tracking-widest uppercase font-bold text-[#c9a962]">
+                        {selectedSubject} Selection
+                      </div>
+                      
+                      <div className="grid md:grid-cols-2 gap-10">
+                        <div>
+                          <label className={labelClasses}>Select Course</label>
+                          <select 
+                            value={formData.courseId} 
+                            onChange={e => setFormData({...formData, courseId: e.target.value, classId: ""})} 
+                            className={inputClasses}
                           >
-                            <input
-                              type="radio"
-                              name="classTime"
-                              value={cls.id}
-                              checked={formData.classId === cls.id}
-                              onChange={e => setFormData({...formData, classId: e.target.value})}
-                              className="accent-[#c9a962]"
-                            />
-                            <div className="flex flex-col">
-                              <span className="font-bold text-[#1a1a1a] text-sm">{cls.day_of_week}</span>
-                              <span className="text-[#71717a] text-[10px] uppercase tracking-wider">{cls.start_time} - {cls.end_time}</span>
-                            </div>
-                          </label>
-                        ))
-                      )}
-                    </div>
-                  ) : (
-                    <div className="py-4 text-[#a1a1aa] text-sm italic">Please select a course to see available times.</div>
+                            <option value="">Select a Course</option>
+
+                            {/* Special handling for Mathematics: show Year 7-12 buckets */}
+                            {selectedSubject?.toLowerCase().includes('mathematics')
+                              ? (() => {
+                                  const mathCourse = dbCourses.find(c => c.name.toLowerCase() === 'mathematics');
+                                  console.log("Math course found:", mathCourse, "All courses:", dbCourses);
+                                  if (!mathCourse) {
+                                    console.warn("No mathematics course found");
+                                    return <option value="">No Mathematics course available</option>;
+                                  }
+                                  return [7, 8, 9, 10, 11, 12].map(year => (
+                                    <option key={`${mathCourse.id}-m-${year}`} value={`${mathCourse.id}|year${year}`}>
+                                      {`Year ${year} Mathematics`}
+                                    </option>
+                                  ));
+                                })()
+
+                              /* Special handling for Science (Year 7 - 10): show Year 7-10 course buckets */
+                              : selectedSubject?.toLowerCase().includes('science') && selectedSubject?.toLowerCase().includes('year')
+                                ? (() => {
+                                    const scienceCourse = dbCourses.find(c => c.name.toLowerCase() === 'science');
+                                    console.log("Science course found:", scienceCourse, "All courses:", dbCourses);
+                                    if (!scienceCourse) {
+                                      console.warn("No science course found");
+                                      return <option value="">No Science course available</option>;
+                                    }
+                                    return [7, 8, 9, 10].map(year => (
+                                      <option key={`${scienceCourse.id}-${year}`} value={`${scienceCourse.id}|year${year}`}>
+                                        {`Year ${year} Science`}
+                                      </option>
+                                    ));
+                                  })()
+
+                                : (() => {
+                                    const filtered = dbCourses.filter(c => {
+                                      const name = c.name.toLowerCase();
+                                      const subject = selectedSubject?.toLowerCase() || "";
+                                      
+                                      // For specific sciences, only show that subject's course
+                                      if (subject === 'physics' || subject === 'chemistry' || subject === 'biology') {
+                                        return name === subject;
+                                      }
+                                      
+                                      // For mathematics and general cases
+                                      return name.includes(subject);
+                                    });
+                                    console.log("Filtered courses for subject", selectedSubject, ":", filtered);
+                                    return filtered.map(course => (
+                                      <option key={course.id} value={course.id}>{course.name}</option>
+                                    ));
+                                  })()
+                            }
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <label className={labelClasses}>Select Class</label>
+                          <select 
+                            value={formData.classId} 
+                            onChange={e => setFormData({...formData, classId: e.target.value})} 
+                            className={inputClasses}
+                            disabled={!formData.courseId}
+                          >
+                            <option value="">Select a Class</option>
+                            {filteredClasses.map(cls => {
+                              // For Physics/Chemistry/Biology, strip subject name and show only year level
+                              let displayName = cls.name;
+                              if (cls.name.includes('Physics') || cls.name.includes('Chemistry') || cls.name.includes('Biology')) {
+                                displayName = cls.name.replace(/Physics|Chemistry|Biology/gi, '').trim();
+                              }
+                              return (
+                                <option key={cls.id} value={cls.id}>{displayName} ({cls.day_of_week} {cls.start_time})</option>
+                              );
+                            })}
+                          </select>
+                        </div>
+                      </div>
+                    </motion.div>
                   )}
                 </div>
 

@@ -136,8 +136,9 @@ interface Course {
     const [showProfile, setShowProfile] = useState(false);
     const [activeTab, setActiveTab] = useState<"onboarding" | "curriculum" | "faculty" | "comms" | "lookup" | "trials" | "messages">("onboarding");
   
-  const [newTeacher, setNewTeacher] = useState({ email: "", password: "", fullName: "", department: "" });
+  const [newTeacher, setNewTeacher] = useState({ email: "", fullName: "", department: "" });
   const [creating, setCreating] = useState(false);
+  const [lastTeacherSecret, setLastTeacherSecret] = useState<string | null>(null);
   
   const [newCourse, setNewCourse] = useState({ name: "", code: "", description: "" });
   const [creatingCourse, setCreatingCourse] = useState(false);
@@ -171,6 +172,9 @@ interface Course {
 
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [revealPassword, setRevealPassword] = useState(false);
+  const [resetPassword, setResetPassword] = useState<{ type: 'student' | 'parent'; id: string; name: string } | null>(null);
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [resetSecret, setResetSecret] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Student[]>([]);
@@ -401,9 +405,10 @@ interface Course {
       const res = await fetch("/api/create-teacher", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newTeacher) });
       const result = await res.json();
       if (!result.success) throw new Error(result.error);
-      setNewTeacher({ email: "", password: "", fullName: "", department: "" });
+      setNewTeacher({ email: "", fullName: "", department: "" });
+      setLastTeacherSecret(result.oneTimePassword || null);
       await loadTeachers();
-      alert("Faculty registered successfully.");
+      alert("Faculty registered successfully. One-time password generated.");
     } catch (err) { alert(err instanceof Error ? err.message : "Failed"); } finally { setCreating(false); }
   }
 
@@ -498,6 +503,26 @@ interface Course {
       alert(err instanceof Error ? err.message : "Termination failed.");
     } finally {
       setRemoving(false);
+    }
+  }
+
+  async function handleResetPassword() {
+    if (!resetPassword) return;
+    setResettingPassword(true);
+    try {
+      const res = await fetch("/api/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: resetPassword.id })
+      });
+      const result = await res.json();
+      if (!result.success) throw new Error(result.error);
+      setResetSecret(result.oneTimePassword);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to reset password.");
+      setResetPassword(null);
+    } finally {
+      setResettingPassword(false);
     }
   }
 
@@ -648,8 +673,26 @@ interface Course {
                     exit={{ opacity: 0, y: -10 }}
                     className="grid lg:grid-cols-2 gap-8"
                   >
-                    <div className="bg-white p-10 rounded-3xl border border-gray-100 shadow-sm">
+                    <div className="bg-white p-10 rounded-3xl border border-gray-100 shadow-sm space-y-6">
                       <h3 className="font-serif text-2xl text-gray-900 mb-8">Personnel <span className="italic font-light">Onboarding</span></h3>
+                      {lastTeacherSecret && (
+                        <div className="bg-gray-900 text-[#c9a962] p-4 rounded-xl border border-[#c9a962]/40 shadow">
+                          <p className="text-[10px] uppercase tracking-[0.3em] font-bold mb-2">One-Time Password</p>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-mono text-sm">{lastTeacherSecret}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(lastTeacherSecret).catch(() => {});
+                              }}
+                              className="text-[10px] uppercase tracking-[0.2em] px-3 py-2 bg-[#c9a962] text-white rounded-lg hover:opacity-90 transition"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-gray-300 mt-2">Display this once to the teacher and require immediate password reset at first login.</p>
+                        </div>
+                      )}
                       <form onSubmit={handleCreateTeacher} className="space-y-6">
                         <div>
                           <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Legal Full Name</label>
@@ -662,28 +705,15 @@ interface Course {
                             required 
                           />
                         </div>
-                        <div className="grid grid-cols-2 gap-6">
-                          <div>
-                            <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Email</label>
-                            <input 
-                              type="email" 
-                              value={newTeacher.email} 
-                              onChange={(e) => setNewTeacher({...newTeacher, email: e.target.value})} 
-                              className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl focus:ring-2 focus:ring-[#c9a962]/20 outline-none transition-all" 
-                              required 
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Security Key</label>
-                            <input 
-                              type="password" 
-                              value={newTeacher.password} 
-                              onChange={(e) => setNewTeacher({...newTeacher, password: e.target.value})} 
-                              className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl focus:ring-2 focus:ring-[#c9a962]/20 outline-none transition-all" 
-                              required 
-                              minLength={6} 
-                            />
-                          </div>
+                        <div>
+                          <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Email</label>
+                          <input 
+                            type="email" 
+                            value={newTeacher.email} 
+                            onChange={(e) => setNewTeacher({...newTeacher, email: e.target.value})} 
+                            className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl focus:ring-2 focus:ring-[#c9a962]/20 outline-none transition-all" 
+                            required 
+                          />
                         </div>
                         <div>
                           <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Department</label>
@@ -754,28 +784,37 @@ interface Course {
                               placeholder="e.g. MATH-101"
                               required 
                             />
-                          </div>
-                          <button 
-                            type="submit" 
-                            disabled={creatingCourse} 
-                            className="w-full py-5 bg-[#1a1a1a] text-[#c9a962] text-[10px] tracking-[0.4em] uppercase font-bold rounded-xl hover:bg-[#c9a962] hover:text-white transition-all duration-500"
-                          >
-                            {creatingCourse ? "ESTABLISHING..." : "ESTABLISH SUBJECT"}
-                          </button>
-                        </form>
-                      </div>
-
-                      {/* Class Establishment */}
-                      <div className="bg-white p-10 rounded-3xl border border-gray-100 shadow-sm">
-                        <h3 className="font-serif text-2xl text-gray-900 mb-8">Class <span className="italic font-light">Generation</span></h3>
-                        <form onSubmit={handleCreateClass} className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
+                            </div>
                             <div>
-                              <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Parent Subject</label>
-                              <select 
-                                value={newClass.course_id} 
-                                onChange={(e) => setNewClass({...newClass, course_id: e.target.value})} 
-                                className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl outline-none" 
+                              <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Description</label>
+                              <textarea
+                                value={newCourse.description}
+                                onChange={(e) => setNewCourse({...newCourse, description: e.target.value})}
+                                className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl focus:ring-2 focus:ring-[#c9a962]/20 outline-none transition-all h-28 resize-none"
+                                placeholder="Outline, outcomes, or syllabus notes"
+                                required
+                              />
+                            </div>
+                            <button
+                              type="submit"
+                              disabled={creatingCourse}
+                              className="w-full py-5 bg-[#1a1a1a] text-[#c9a962] text-[10px] tracking-[0.4em] uppercase font-bold rounded-xl hover:bg-[#c9a962] hover:text-white transition-all duration-500"
+                            >
+                              {creatingCourse ? "ESTABLISHING..." : "ESTABLISH SUBJECT"}
+                            </button>
+                          </form>
+                        </div>
+
+                        {/* Class Generation */}
+                        <div className="bg-white p-10 rounded-3xl border border-gray-100 shadow-sm">
+                          <h3 className="font-serif text-2xl text-gray-900 mb-8">Class <span className="italic font-light">Generation</span></h3>
+                          <form onSubmit={handleCreateClass} className="space-y-6">
+                            <div>
+                              <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Subject</label>
+                              <select
+                                value={newClass.course_id}
+                                onChange={(e) => setNewClass({...newClass, course_id: e.target.value})}
+                                className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl outline-none"
                                 required
                               >
                                 <option value="">Select Subject</option>
@@ -784,74 +823,73 @@ interface Course {
                             </div>
                             <div>
                               <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Class Name</label>
-                              <input 
-                                type="text" 
-                                value={newClass.name} 
-                                onChange={(e) => setNewClass({...newClass, name: e.target.value})} 
-                                className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl outline-none" 
+                              <input
+                                type="text"
+                                value={newClass.name}
+                                onChange={(e) => setNewClass({...newClass, name: e.target.value})}
+                                className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl outline-none"
                                 placeholder="e.g. Year 10 Math"
-                                required 
-                              />
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Day</label>
-                              <select 
-                                value={newClass.day_of_week} 
-                                onChange={(e) => setNewClass({...newClass, day_of_week: e.target.value})} 
-                                className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl outline-none" 
                                 required
-                              >
-                                {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(d => (
-                                  <option key={d} value={d}>{d}</option>
-                                ))}
-                              </select>
-                              <p className="mt-2 text-xs text-gray-500">Class code auto-generates from subject, day, and start time.</p>
-                            </div>
-                            <div>
-                              <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Start Time</label>
-                              <input 
-                                type="time" 
-                                value={newClass.start_time} 
-                                onChange={(e) => setNewClass({...newClass, start_time: e.target.value})} 
-                                className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl outline-none" 
-                                required 
                               />
                             </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">End Time</label>
-                              <input 
-                                type="time" 
-                                value={newClass.end_time} 
-                                onChange={(e) => setNewClass({...newClass, end_time: e.target.value})} 
-                                className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl outline-none" 
-                                required 
-                              />
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Day</label>
+                                <select
+                                  value={newClass.day_of_week}
+                                  onChange={(e) => setNewClass({...newClass, day_of_week: e.target.value})}
+                                  className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl outline-none"
+                                  required
+                                >
+                                  {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(d => (
+                                    <option key={d} value={d}>{d}</option>
+                                  ))}
+                                </select>
+                                <p className="mt-2 text-xs text-gray-500">Class code auto-generates from subject, day, and start time.</p>
+                              </div>
+                              <div>
+                                <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Start Time</label>
+                                <input
+                                  type="time"
+                                  value={newClass.start_time}
+                                  onChange={(e) => setNewClass({...newClass, start_time: e.target.value})}
+                                  className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl outline-none"
+                                  required
+                                />
+                              </div>
                             </div>
-                            <div>
-                              <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Room (optional)</label>
-                              <input 
-                                type="text" 
-                                value={newClass.room} 
-                                onChange={(e) => setNewClass({...newClass, room: e.target.value})} 
-                                className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl outline-none" 
-                                placeholder="Main Hall"
-                              />
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">End Time</label>
+                                <input
+                                  type="time"
+                                  value={newClass.end_time}
+                                  onChange={(e) => setNewClass({...newClass, end_time: e.target.value})}
+                                  className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl outline-none"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Room (optional)</label>
+                                <input
+                                  type="text"
+                                  value={newClass.room}
+                                  onChange={(e) => setNewClass({...newClass, room: e.target.value})}
+                                  className="w-full bg-[#f8f9fa] border-none p-4 rounded-xl outline-none"
+                                  placeholder="Main Hall"
+                                />
+                              </div>
                             </div>
-                          </div>
-                          <button 
-                            type="submit" 
-                            disabled={creatingClass} 
-                            className="w-full py-5 bg-[#1a1a1a] text-[#c9a962] text-[10px] tracking-[0.4em] uppercase font-bold rounded-xl hover:bg-[#c9a962] hover:text-white transition-all duration-500"
-                          >
-                            {creatingClass ? "GENERATING..." : "GENERATE CLASS"}
-                          </button>
-                        </form>
+                            <button
+                              type="submit"
+                              disabled={creatingClass}
+                              className="w-full py-5 bg-[#1a1a1a] text-[#c9a962] text-[10px] tracking-[0.4em] uppercase font-bold rounded-xl hover:bg-[#c9a962] hover:text-white transition-all duration-500"
+                            >
+                              {creatingClass ? "GENERATING..." : "GENERATE CLASS"}
+                            </button>
+                          </form>
+                        </div>
                       </div>
-                    </div>
 
                     <div className="bg-white p-10 rounded-3xl border border-gray-100 shadow-sm">
                       <h3 className="font-serif text-2xl text-gray-900 mb-8">Class <span className="italic font-light">Assignment</span></h3>
@@ -1332,7 +1370,8 @@ interface Course {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-hidden"
+            onWheel={(e) => e.stopPropagation()}
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -1372,16 +1411,9 @@ interface Course {
                     <div className="flex items-center gap-2">
                       <Shield size={16} className="text-[#c9a962]" />
                       <span className="font-mono">
-                        {revealPassword ? "Not stored" : "••••••••••••"}
+                        Not stored (one-time password shown at creation)
                       </span>
                     </div>
-                    <button 
-                      onClick={() => setRevealPassword(!revealPassword)}
-                      className="p-2 hover:bg-[#c9a962]/10 rounded-lg text-[#c9a962] transition-colors"
-                      aria-label="Toggle visibility"
-                    >
-                      {revealPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
                   </div>
                 </div>
 
@@ -1415,7 +1447,8 @@ interface Course {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-hidden"
+              onWheel={(e) => e.stopPropagation()}
             >
               <motion.div 
                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -1519,22 +1552,10 @@ interface Course {
                       <h4 className="text-[10px] uppercase tracking-[0.2em] text-[#c9a962] font-bold mb-6 flex items-center gap-2">
                         <Shield size={14} /> Security & Portal Access
                       </h4>
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                          <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Student Portal Login</label>
-                          <p className="text-xs font-medium text-gray-900 mb-2 truncate">{selectedStudent.profile?.email}</p>
-                          <div className="flex items-center justify-between gap-2 bg-white p-2 rounded-lg border border-gray-200">
-                            <span className="font-mono text-xs text-gray-600">
-                              {revealPassword ? "Not stored" : "••••••••••••"}
-                            </span>
-                            <button 
-                              onClick={() => setRevealPassword(!revealPassword)}
-                              className="p-1 hover:bg-[#c9a962]/10 rounded text-[#c9a962]"
-                            >
-                              {revealPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                            </button>
-                          </div>
-                        </div>
+                      <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Student Portal Login</label>
+                        <p className="text-sm font-bold text-gray-900 font-mono">{selectedStudent.student_number}</p>
+                        <p className="text-[11px] text-gray-500 mt-3 italic">Password shown only at enrolment completion. Use reset password button to generate new credentials.</p>
                       </div>
                     </section>
                   </div>
@@ -1585,11 +1606,17 @@ interface Course {
                                 <p className="text-[10px] font-medium text-gray-600 italic">"{p.profile?.parent_details?.referral_source || "Direct"}"</p>
                               </div>
                               <div className="pt-2 border-t border-gray-100">
-                                <label className="text-[8px] uppercase tracking-widest text-gray-400 font-bold block mb-1">Portal Password</label>
-                                <div className="flex items-center justify-between">
+                                <label className="text-[8px] uppercase tracking-widest text-gray-400 font-bold block mb-2">Portal Password</label>
+                                <div className="flex items-center justify-between gap-2">
                                   <span className="font-mono text-[10px] text-gray-400">
                                     {revealPassword ? "Not stored" : "••••••••"}
                                   </span>
+                                  <button
+                                    onClick={() => setResetPassword({ type: 'parent', id: p.profile_id, name: p.profile?.full_name || 'Parent' })}
+                                    className="text-[8px] uppercase tracking-widest px-2 py-1 bg-orange-100 text-orange-600 rounded hover:bg-orange-200 transition font-bold"
+                                  >
+                                    Reset
+                                  </button>
                                 </div>
                               </div>
                             </div>
@@ -1600,10 +1627,16 @@ interface Course {
                   </div>
                 </div>
 
-                <div className="mt-16 pt-10 border-t border-gray-100 flex justify-center">
+                <div className="mt-16 pt-10 border-t border-gray-100 flex gap-4 justify-center flex-wrap">
+                  <button 
+                    onClick={() => setResetPassword({ type: 'student', id: selectedStudent.profile_id, name: selectedStudent.profile?.full_name || 'Student' })}
+                    className="px-8 py-4 bg-orange-100 text-orange-600 text-[10px] tracking-[0.3em] uppercase font-bold rounded-xl hover:bg-orange-200 transition-all"
+                  >
+                    Reset Password
+                  </button>
                   <button 
                     onClick={() => { setSelectedStudent(null); setRevealPassword(false); }}
-                    className="px-20 py-5 bg-[#1a1a1a] text-[#c9a962] text-[10px] tracking-[0.4em] uppercase font-bold rounded-xl hover:bg-[#c9a962] hover:text-white transition-all shadow-xl shadow-[#1a1a1a]/10"
+                    className="px-20 py-4 bg-[#1a1a1a] text-[#c9a962] text-[10px] tracking-[0.4em] uppercase font-bold rounded-xl hover:bg-[#c9a962] hover:text-white transition-all shadow-xl shadow-[#1a1a1a]/10"
                   >
                     DISMISS DOSSIER
                   </button>
@@ -1620,7 +1653,8 @@ interface Course {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-hidden"
+            onWheel={(e) => e.stopPropagation()}
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -1672,6 +1706,84 @@ interface Course {
                 >
                   ABORT OPERATION
                 </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Reset Password Modal */}
+      <AnimatePresence>
+        {resetPassword && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-hidden"
+            onWheel={(e) => e.stopPropagation()}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-gray-100"
+            >
+              <button 
+                onClick={() => { setResetPassword(null); setResetSecret(null); }}
+                className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X size={20} className="text-gray-400" />
+              </button>
+
+              <div className="text-center space-y-6">
+                <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center text-orange-600 mx-auto">
+                  <Shield size={32} />
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-serif text-gray-900 mb-1">Reset Password</h3>
+                  <p className="text-sm text-gray-600">{resetPassword.name}</p>
+                </div>
+
+                {!resetSecret ? (
+                  <>
+                    <p className="text-sm text-gray-600">
+                      A new one-time password will be generated and they'll be required to set a new password on next login.
+                    </p>
+                    <button 
+                      onClick={handleResetPassword}
+                      disabled={resettingPassword}
+                      className="w-full py-4 bg-orange-600 text-white text-[10px] tracking-[0.3em] uppercase font-bold rounded-xl hover:bg-orange-700 transition-all shadow-lg shadow-orange-600/20 disabled:opacity-60"
+                    >
+                      {resettingPassword ? "Generating..." : "Generate New Password"}
+                    </button>
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-gray-900 text-[#c9a962] p-4 rounded-xl border border-[#c9a962]/40">
+                      <p className="text-[10px] uppercase tracking-[0.3em] font-bold mb-2">One-Time Password</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-sm">{resetSecret}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(resetSecret).catch(() => {});
+                          }}
+                          className="text-[10px] uppercase tracking-[0.2em] px-3 py-2 bg-[#c9a962] text-white rounded-lg hover:opacity-90 transition"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-gray-300 mt-2">Display this once and require immediate password reset.</p>
+                    </div>
+                    <button 
+                      onClick={() => { setResetPassword(null); setResetSecret(null); }}
+                      className="w-full py-4 border-2 border-gray-100 text-gray-400 text-[10px] tracking-[0.3em] uppercase font-bold rounded-xl hover:bg-gray-50 transition-all"
+                    >
+                      Done
+                    </button>
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>

@@ -2,12 +2,20 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
+function generateOneTimePassword() {
+  // 16-char random password with upper, lower, number, and symbol.
+  const base = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
+  const symbols = "!@#$%^&*";
+  const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+  return base + symbol + "7"; // ensure a digit and symbol
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password, fullName, department } = body;
+    const { email, fullName, department } = body;
 
-    if (!email || !password || !fullName || !department) {
+    if (!email || !fullName || !department) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
@@ -23,11 +31,13 @@ export async function POST(request: Request) {
 
     const supabase = createAdminClient();
 
+    const oneTimePassword = generateOneTimePassword();
+
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
-      password,
+      password: oneTimePassword,
       email_confirm: true,
-      user_metadata: { role: "teacher" },
+      user_metadata: { role: "teacher", require_password_reset: true },
     });
 
     if (authError) throw authError;
@@ -49,7 +59,7 @@ export async function POST(request: Request) {
 
       if (teacherError) throw teacherError;
 
-      return NextResponse.json({ success: true, email });
+      return NextResponse.json({ success: true, email, oneTimePassword });
     }
 
     return NextResponse.json({ success: false, error: "Failed to create teacher" }, { status: 400 });

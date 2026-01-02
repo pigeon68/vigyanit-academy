@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { login } from "./actions";
+import { Mail, X } from "lucide-react";
 
 function BookSpine3D() {
   return (
@@ -51,6 +52,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotIdentifier, setForgotIdentifier] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState("");
+  const [forgotSuccess, setForgotSuccess] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +72,42 @@ export default function LoginPage() {
     if (result?.error) {
       setError(result.error);
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotError("");
+    setForgotSuccess(false);
+
+    try {
+      const response = await fetch("/api/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: forgotIdentifier }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setForgotError(data.error || "Failed to process request");
+        setForgotLoading(false);
+        return;
+      }
+
+      setForgotSuccess(true);
+      setForgotIdentifier("");
+      setForgotLoading(false);
+
+      // Close modal after 3 seconds
+      setTimeout(() => {
+        setShowForgotPassword(false);
+        setForgotSuccess(false);
+      }, 3000);
+    } catch (err) {
+      setForgotError("An error occurred. Please try again.");
+      setForgotLoading(false);
     }
   };
 
@@ -139,15 +181,117 @@ export default function LoginPage() {
           </form>
 
             <div className="mt-12 text-center pt-8 border-t border-[#f4f4f5]">
-              <p className="text-[#a1a1aa] text-xs">
+              <p className="text-[#a1a1aa] text-xs mb-6">
                 First time?{" "}
                   <Link href="/enrol" className="text-[#1a1a1a] font-bold hover:text-[#c9a962] transition-colors ml-2 uppercase tracking-widest text-[9px]">
                   Apply for Enrolment
                 </Link>
               </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForgotPassword(true);
+                  setForgotError("");
+                  setForgotSuccess(false);
+                }}
+                className="text-[#c9a962] hover:text-[#1a1a1a] text-xs font-medium tracking-widest uppercase transition-colors flex items-center justify-center gap-2 mx-auto"
+              >
+                <Mail size={14} />
+                Forgot Password?
+              </button>
             </div>
         </div>
       </motion.div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowForgotPassword(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white border border-[#e5e5e5] rounded-lg max-w-md w-full p-8 shadow-2xl"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-serif text-[#1a1a1a]">
+                Reset <span className="italic font-light text-[#c9a962]">Password</span>
+              </h2>
+              <button
+                onClick={() => setShowForgotPassword(false)}
+                className="p-1 hover:bg-gray-100 rounded transition-colors"
+              >
+                <X size={20} className="text-[#a1a1aa]" />
+              </button>
+            </div>
+
+            {forgotSuccess ? (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center py-8"
+              >
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Mail size={24} className="text-green-600" />
+                </div>
+                <p className="text-[#1a1a1a] font-medium mb-2">Request Sent Successfully</p>
+                <p className="text-xs text-[#a1a1aa]">
+                  A password reset request has been sent to office@vigyanitacademy.com. Our team will contact you shortly to assist with your account recovery.
+                </p>
+              </motion.div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-6">
+                <p className="text-xs text-[#a1a1aa] leading-relaxed">
+                  Enter your email address or student ID. Our team will process your password reset request and contact you to verify your identity.
+                </p>
+
+                {forgotError && (
+                  <div className="p-3 bg-red-50 border-l-2 border-red-500 text-red-600 text-xs font-medium">
+                    {forgotError}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-[10px] tracking-[0.2em] uppercase text-[#1a1a1a] font-bold mb-3">
+                    Email or Student ID
+                  </label>
+                  <input
+                    type="text"
+                    value={forgotIdentifier}
+                    onChange={(e) => setForgotIdentifier(e.target.value)}
+                    required
+                    disabled={forgotLoading}
+                    className="w-full px-0 py-4 bg-transparent border-b border-[#e5e5e5] text-[#1a1a1a] focus:border-[#c9a962] focus:outline-none transition-colors font-light disabled:opacity-50"
+                    placeholder="email@example.com or STU123456"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={forgotLoading || !forgotIdentifier}
+                  className="w-full py-4 text-[10px] tracking-[0.4em] uppercase bg-[#1a1a1a] text-[#fafaf9] hover:bg-[#c9a962] transition-colors duration-500 disabled:opacity-50 font-medium"
+                >
+                  {forgotLoading ? "Sending Request..." : "Send Reset Request"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(false)}
+                  className="w-full py-4 text-[10px] tracking-[0.4em] uppercase border border-[#e5e5e5] text-[#1a1a1a] hover:bg-gray-50 transition-colors duration-500 font-medium"
+                >
+                  Cancel
+                </button>
+              </form>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
     </main>
   );
 }

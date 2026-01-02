@@ -1,11 +1,32 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { rateLimit, getClientIdentifier } from "@/lib/rate-limit";
+
+const trialLessonSchema = z.object({
+  parentName: z.string().min(2).max(120),
+  parentEmail: z.string().email(),
+  parentPhone: z.string().min(6).max(50),
+  studentName: z.string().min(2).max(120),
+  courseId: z.string().uuid(),
+  classId: z.string().uuid(),
+});
 
 export async function POST(req: Request) {
   try {
+    // Rate limit per client
+    const clientId = getClientIdentifier(req);
+    const { success, resetTime } = rateLimit(`trial-lesson:${clientId}`, 5, 5 * 60 * 1000);
+    if (!success) {
+      return NextResponse.json(
+        { error: `Too many requests. Try again in ${Math.ceil(resetTime / 1000)}s.` },
+        { status: 429 }
+      );
+    }
+
     const supabase = await createClient();
     const body = await req.json();
-    const { parentName, parentEmail, parentPhone, studentName, courseId, classId } = body;
+    const { parentName, parentEmail, parentPhone, studentName, courseId, classId } = trialLessonSchema.parse(body);
 
     const { error } = await supabase
       .from("trial_lessons")
@@ -22,7 +43,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.errors[0].message }, { status: 400 });
+    }
     console.error("Trial lesson submission error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Unable to submit. Please try again." }, { status: 500 });
   }
 }

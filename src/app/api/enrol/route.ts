@@ -1,10 +1,78 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getClientIdentifier, rateLimit } from "@/lib/rate-limit";
+
+const enrolSchema = z.object({
+  parent: z.object({
+    email: z.string().email().max(254),
+    password: z.string().min(12).max(128),
+    firstName: z.string().trim().min(1).max(80),
+    lastName: z.string().trim().min(1).max(80),
+    phone: z.string().trim().min(6).max(32),
+    address: z.string().trim().min(1).max(200),
+    suburb: z.string().trim().min(1).max(80),
+    postcode: z.string().trim().min(3).max(10),
+    state: z.string().trim().min(2).max(20),
+    occupation: z.string().trim().max(120).optional(),
+    referralSource: z.string().trim().max(120).optional(),
+    relationship: z.string().trim().max(60).optional(),
+  }),
+  student: z.object({
+    firstName: z.string().trim().min(1).max(80),
+    lastName: z.string().trim().min(1).max(80),
+    gradeLevel: z.string().trim().regex(/^\d{1,2}$/),
+    gender: z.string().trim().max(30).optional(),
+    dateOfBirth: z.string().trim().max(30).optional(),
+    schoolName: z.string().trim().max(150).optional(),
+  }),
+  selection: z.object({
+    subjects: z
+      .array(
+        z.object({
+          subject: z.string().trim().min(1).max(100),
+          courseName: z.string().trim().min(1).max(150),
+          className: z.string().trim().max(150).optional(),
+        })
+      )
+      .nonempty(),
+  }),
+  paymentMethod: z.enum(["stripe", "cash"]).optional(),
+});
 
 export async function POST(request: NextRequest) {
   try {
+    const limiter = rateLimit({
+      key: `${getClientIdentifier(request)}:enrol`,
+      limit: 5,
+      windowMs: 60_000,
+    });
+
+    if (!limiter.success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again shortly." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(Math.max(Math.ceil((limiter.resetAt - Date.now()) / 1000), 1)),
+          },
+        }
+      );
+    }
+
     const body = await request.json();
-    const { parent, student, selection, paymentMethod } = body;
+    const parsed = enrolSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          error: "Invalid enrolment data",
+          detail: parsed.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { parent, student, selection, paymentMethod } = parsed.data;
 
     const supabase = createAdminClient();
 
@@ -65,13 +133,13 @@ export async function POST(request: NextRequest) {
 
       const studentNumber = `STU${Date.now().toString().slice(-6)}`;
 
-      // Create Student Auth User (Hidden from parent login, for future use)
+      // Create Student Auth User with forced password reset on first login
       const studentPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-2).toUpperCase() + "!";
       const { data: studentAuthData, error: studentAuthError } = await supabase.auth.admin.createUser({
         email: `${studentNumber}@student.vigyanit.com`,
         password: studentPassword,
         email_confirm: true,
-        user_metadata: { role: 'student' }
+        user_metadata: { role: 'student', require_password_reset: true }
       });
 
       if (studentAuthError) throw studentAuthError;
@@ -87,9 +155,12 @@ export async function POST(request: NextRequest) {
 
         if (studentProfileError) throw studentProfileError;
 
-          const selectedSubjects = selection.subjects.map((s: any) => s.subject);
-          const selectedCoursesNames = selection.subjects.map((s: any) => s.courseName).join(", ");
-          const preferredClassesNames = selection.subjects.map((s: any) => s.className).join(", ");
+          const selectedSubjects = selection.subjects.map((s) => s.subject);
+          const selectedCoursesNames = selection.subjects.map((s) => s.courseName).join(", ");
+          const preferredClassesNames = selection.subjects
+            .map((s) => s.className)
+            .filter(Boolean)
+            .join(", ");
 
           // Create Student Record
           const { data: studentData, error: studentError } = await supabase
@@ -124,47 +195,31 @@ export async function POST(request: NextRequest) {
 
               if (relationshipError) throw relationshipError;
 
-              return NextResponse.json({ success: true, studentId: studentRowId });
+              return NextResponse.json({ 
+                success: true, 
+                studentId: studentRowId,
+                studentNumber,
+                studentPassword
+              });
             }
         }
   
       return NextResponse.json({ error: "Failed to create user" }, { status: 400 });
     } catch (error) {
-      // Handle duplicate email (Supabase Auth conflict) explicitly even if thrown
-      const message = error instanceof Error ? error.message : String(error);
+      const message = error instanceof Error ? error.message : String(error || "Unknown error");
       if (message.toLowerCase().includes("already been registered")) {
-        const detail = error instanceof Error
-          ? { name: error.name, message: error.message, stack: error.stack }
-          : error;
-        console.error("Enrolment conflict:", detail);
         return NextResponse.json(
           {
             error: "This email is already registered. Please log in or use a different email.",
-            detail,
           },
           { status: 409 }
         );
       }
 
-      // Provide a serializable, informative error response
-      const detail = (() => {
-        if (!error) return "Unknown error";
-        if (error instanceof Error) {
-          return {
-            name: error.name,
-            message: error.message,
-            stack: error.stack,
-          };
-        }
-        if (typeof error === "object") return error;
-        return String(error);
-      })();
-
-      console.error("Enrolment error:", detail);
+      console.error("Enrolment error", { message });
       return NextResponse.json(
         {
-          error: error instanceof Error ? error.message : "An error occurred",
-          detail,
+          error: "An error occurred while processing enrolment.",
         },
         { status: 500 }
       );

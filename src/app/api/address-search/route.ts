@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, getClientIdentifier } from "@/lib/rate-limit";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const MAX_RESULTS = 10;
@@ -7,6 +8,15 @@ export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q")?.trim() || "";
   if (query.length < 3) {
     return NextResponse.json({ error: "Query too short" }, { status: 400 });
+  }
+
+  const clientId = getClientIdentifier(request);
+  const { success, resetTime } = rateLimit(`address-search:${clientId}`, 10, 60 * 1000);
+  if (!success) {
+    return NextResponse.json(
+      { error: `Too many requests. Try again in ${Math.ceil(resetTime / 1000)}s.` },
+      { status: 429 }
+    );
   }
 
   try {

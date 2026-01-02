@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 
 export async function login(formData: FormData) {
@@ -23,7 +24,13 @@ export async function login(formData: FormData) {
     return { error: error.message };
   }
 
-  const { data: profile } = await supabase
+  if (data.user?.user_metadata?.require_password_reset) {
+    redirect("/reset-password-required");
+  }
+
+  // Use admin client to bypass RLS and reliably fetch profile role
+  const admin = createAdminClient();
+  const { data: profile } = await admin
     .from("profiles")
     .select("role")
     .eq("id", data.user.id)

@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+import { rateLimit } from "@/lib/rate-limit";
+
+const classSchema = z.object({
+  course_id: z.string().uuid(),
+  name: z.string().min(2).max(120),
+  day_of_week: z.string().min(3).max(20),
+  start_time: z.string().regex(/^\d{2}:\d{2}$/),
+  end_time: z.string().regex(/^\d{2}:\d{2}$/),
+  room: z.string().min(1).max(50).optional(),
+});
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { course_id, name, day_of_week, start_time, end_time, room } = body;
-
-    if (!course_id || !name || !day_of_week || !start_time || !end_time) {
-      return NextResponse.json(
-        { success: false, error: "Missing required fields" },
-        { status: 400 }
-      );
-    }
+    const { course_id, name, day_of_week, start_time, end_time, room } = classSchema.parse(body);
 
     // Require admin session
     const supabaseServer = await createClient();
@@ -20,6 +24,11 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     const { data: profile } = await supabaseServer.from("profiles").select("role").eq("id", user.id).maybeSingle();
     if (profile?.role !== "admin") return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+
+    const { success, resetTime } = rateLimit(`create-class:${user.id}`, 10, 10 * 60 * 1000);
+    if (!success) {
+      return NextResponse.json({ success: false, error: `Too many requests. Try again in ${Math.ceil(resetTime / 1000)}s.` }, { status: 429 });
+    }
 
     const supabase = createAdminClient();
 
@@ -87,9 +96,12 @@ export async function POST(request: Request) {
       class: data
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ success: false, error: error.errors[0].message }, { status: 400 });
+    }
     console.error("Class creation error:", error);
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "An error occurred" },
+      { success: false, error: "Unable to create class." },
       { status: 500 }
     );
   }
