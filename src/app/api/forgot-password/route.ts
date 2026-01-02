@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       "unknown";
 
     const rateLimitKey = `forgot-password:${clientIp}`;
-    const { success, resetTime } = rateLimit(rateLimitKey, 3, 10 * 60 * 1000);
+    const { success, resetAt: resetTime } = rateLimit({ key: rateLimitKey, limit: 3, windowMs: 10 * 60 * 1000 });
 
     if (!success) {
       return Response.json(

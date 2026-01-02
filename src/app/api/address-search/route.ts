@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   }
 
   const clientId = getClientIdentifier(request);
-  const { success, resetTime } = rateLimit(`address-search:${clientId}`, 10, 60 * 1000);
+  const { success, resetAt: resetTime } = rateLimit({ key: `address-search:${clientId}`, limit: 10, windowMs: 60_000 });
   if (!success) {
     return NextResponse.json(
       { error: `Too many requests. Try again in ${Math.ceil(resetTime / 1000)}s.` },

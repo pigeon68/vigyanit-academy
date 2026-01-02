@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const { data: profile } = await supabaseServer.from("profiles").select("role").eq("id", user.id).maybeSingle();
     if (profile?.role !== "admin") return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
-    const { success, resetTime } = rateLimit(`create-course:${user.id}`, 10, 10 * 60 * 1000);
+    const { success, resetAt: resetTime } = rateLimit({ key: `create-course:${user.id}`, limit: 10, windowMs: 10 * 60 * 1000 });
     if (!success) {
       return NextResponse.json({ success: false, error: `Too many requests. Try again in ${Math.ceil(resetTime / 1000)}s.` }, { status: 429 });
     }

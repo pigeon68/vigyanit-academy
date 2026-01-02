@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   try {
     // Rate limit per client
     const clientId = getClientIdentifier(req);
-    const { success, resetTime } = rateLimit(`trial-lesson:${clientId}`, 5, 5 * 60 * 1000);
+    const { success, resetAt: resetTime } = rateLimit({ key: `trial-lesson:${clientId}`, limit: 5, windowMs: 5 * 60 * 1000 });
     if (!success) {
       return NextResponse.json(
         { error: `Too many requests. Try again in ${Math.ceil(resetTime / 1000)}s.` },

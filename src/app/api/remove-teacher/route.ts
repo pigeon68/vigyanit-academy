@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     if (profile?.role !== "admin") return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
     // Rate limit by admin user
-    const { success, resetTime } = rateLimit(`remove-teacher:${user.id}`, 10, 5 * 60 * 1000);
+    const { success, resetAt: resetTime } = rateLimit({ key: `remove-teacher:${user.id}`, limit: 10, windowMs: 5 * 60 * 1000 });
     if (!success) {
       return NextResponse.json(
         { success: false, error: `Too many requests. Try again in ${Math.ceil(resetTime / 1000)}s.` },
