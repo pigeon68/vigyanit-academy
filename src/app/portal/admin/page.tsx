@@ -200,7 +200,7 @@ interface Course {
   async function loadTeachers() {
     const { data } = await supabase
       .from("teachers")
-      .select(`id, profile_id, department, created_at, profile:profiles(full_name, email, plain_password)`) 
+      .select(`id, profile_id, department, created_at, profile:profiles(full_name, email)`) 
       .order("created_at", { ascending: false });
 
     const normalized: Teacher[] = (data || []).map((teacher: any) => ({
@@ -221,12 +221,12 @@ interface Course {
           id, profile_id, student_number, grade_level, gender, created_at,
           date_of_birth, school_name, selected_subject, selected_course, preferred_class, payment_method, payment_status,
           profile:profiles!inner(
-            full_name, email, plain_password
+            full_name, email
           ),
           parents:parent_student!student_id(
             relationship_type,
             profile:profiles!parent_id(
-              full_name, email, plain_password,
+              full_name, email,
               parent_details:parents!profile_id(
                 phone, address, suburb, postcode, state, occupation, referral_source
               )
@@ -260,12 +260,12 @@ interface Course {
             id, profile_id, student_number, grade_level, gender, created_at,
             date_of_birth, school_name, selected_subject, selected_course, preferred_class, payment_method, payment_status,
             profile:profiles!inner(
-              full_name, email, plain_password
+              full_name, email
             ),
             parents:parent_student!student_id(
               relationship_type,
               profile:profiles!parent_id(
-                full_name, email, plain_password,
+                full_name, email,
                 parent_details:parents!profile_id(
                   phone, address, suburb, postcode, state, occupation, referral_source
                 )
@@ -1372,12 +1372,13 @@ interface Course {
                     <div className="flex items-center gap-2">
                       <Shield size={16} className="text-[#c9a962]" />
                       <span className="font-mono">
-                        {revealPassword ? (selectedTeacher.profile.plain_password || "No password stored") : "••••••••••••"}
+                        {revealPassword ? "Not stored" : "••••••••••••"}
                       </span>
                     </div>
                     <button 
                       onClick={() => setRevealPassword(!revealPassword)}
                       className="p-2 hover:bg-[#c9a962]/10 rounded-lg text-[#c9a962] transition-colors"
+                      aria-label="Toggle visibility"
                     >
                       {revealPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
@@ -1524,7 +1525,7 @@ interface Course {
                           <p className="text-xs font-medium text-gray-900 mb-2 truncate">{selectedStudent.profile?.email}</p>
                           <div className="flex items-center justify-between gap-2 bg-white p-2 rounded-lg border border-gray-200">
                             <span className="font-mono text-xs text-gray-600">
-                              {revealPassword ? (selectedStudent.profile?.plain_password || "N/A") : "••••••••••••"}
+                              {revealPassword ? "Not stored" : "••••••••••••"}
                             </span>
                             <button 
                               onClick={() => setRevealPassword(!revealPassword)}
@@ -1587,7 +1588,7 @@ interface Course {
                                 <label className="text-[8px] uppercase tracking-widest text-gray-400 font-bold block mb-1">Portal Password</label>
                                 <div className="flex items-center justify-between">
                                   <span className="font-mono text-[10px] text-gray-400">
-                                    {revealPassword ? p.profile?.plain_password : "••••••••"}
+                                    {revealPassword ? "Not stored" : "••••••••"}
                                   </span>
                                 </div>
                               </div>

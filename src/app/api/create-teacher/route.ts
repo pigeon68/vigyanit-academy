@@ -29,7 +29,6 @@ export async function POST(request: Request) {
         email,
         full_name: fullName,
         role: "teacher",
-        plain_password: password,
       });
 
       if (profileError) throw profileError;
@@ -41,11 +40,7 @@ export async function POST(request: Request) {
 
       if (teacherError) throw teacherError;
 
-      return NextResponse.json({ 
-        success: true, 
-        email,
-        password
-      });
+      return NextResponse.json({ success: true, email });
     }
 
     return NextResponse.json({ success: false, error: "Failed to create teacher" }, { status: 400 });

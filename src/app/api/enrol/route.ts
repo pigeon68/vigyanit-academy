@@ -41,7 +41,6 @@ export async function POST(request: NextRequest) {
             email: parent.email,
             full_name: `${parent.firstName} ${parent.lastName}`,
             role: "parent",
-            plain_password: parent.password,
           });
 
       if (parentProfileError) throw parentProfileError;
@@ -84,7 +83,6 @@ export async function POST(request: NextRequest) {
             email: `${studentNumber}@student.vigyanit.com`,
             full_name: `${student.firstName} ${student.lastName}`,
             role: "student",
-            plain_password: studentPassword,
           });
 
         if (studentProfileError) throw studentProfileError;
