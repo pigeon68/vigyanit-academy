@@ -5,6 +5,12 @@ config({ path: ".env.local" });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const defaultPassword = process.env.PORTAL_SEED_PASSWORD;
+
+if (!defaultPassword) {
+  console.error("PORTAL_SEED_PASSWORD is not set. Please set it in .env.local before seeding.");
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseServiceRole, {
   auth: {
@@ -19,7 +25,7 @@ async function createUser(email: string, role: string, fullName: string, extraDa
   // 1. Create Auth User
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,
-    password: "VigyanIT#2025@Secure!",
+    password: defaultPassword,
     email_confirm: true,
   });
 
