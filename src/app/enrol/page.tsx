@@ -91,37 +91,7 @@ export default function EnrolPage() {
   const addressContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
-  // Load progress from localStorage
-  useEffect(() => {
-    const savedData = localStorage.getItem("enrolmentData");
-    const savedStep = localStorage.getItem("enrolmentStep");
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        // Handle migration if subjects is array of strings
-        if (parsed.selection && parsed.selection.subjects && typeof parsed.selection.subjects[0] === 'string') {
-          parsed.selection.subjects = parsed.selection.subjects.map((s: string) => ({
-            subject: s, courseId: "", courseName: "", classId: "", className: "", price: 0
-          }));
-        }
-        setEnrolmentData(parsed);
-      } catch (e) {
-        console.error("Failed to parse saved enrolment data", e);
-      }
-    }
-    if (savedStep) {
-      setCurrentStep(savedStep as Step);
-    }
-  }, []);
-
-  // Save progress to localStorage
-  useEffect(() => {
-    localStorage.setItem("enrolmentData", JSON.stringify(enrolmentData));
-  }, [enrolmentData]);
-
-  useEffect(() => {
-    localStorage.setItem("enrolmentStep", currentStep);
-  }, [currentStep]);
+  // No client-side persistence for sensitive data (passwords/PII)
 
   // Handle click outside for address suggestions
   useEffect(() => {
@@ -141,16 +111,7 @@ export default function EnrolPage() {
     }
     setIsSearchingAddress(true);
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-          query.trim()
-        )}&format=json&addressdetails=1&countrycodes=au&limit=15`,
-        {
-          headers: {
-            'Accept-Language': 'en-AU'
-          }
-        }
-      );
+      const res = await fetch(`/api/address-search?q=${encodeURIComponent(query.trim())}`);
       const data = await res.json();
       setAddressSuggestions(data || []);
     } catch (err) {
