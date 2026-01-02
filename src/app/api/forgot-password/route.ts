@@ -108,7 +108,8 @@ This is an automated message from the Vigyanit Academy portal.
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return Response.json({ error: error.errors[0].message }, { status: 400 });
+      const message = error.issues?.[0]?.message || "Invalid request";
+      return Response.json({ error: message }, { status: 400 });
     }
 
     console.error("[Forgot Password Error]", error);
