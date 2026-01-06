@@ -95,10 +95,9 @@ export function CustomCursor() {
     return (
       <>
         <style jsx global>{`
-          * {
-            cursor: none !important;
-          }
-          a, button, [role="button"], .cursor-pointer {
+          /* Hide the system cursor for non-interactive elements
+             so interactive elements can still show pointer/hand */
+          *:not(a):not(button):not([role="button"]):not(.cursor-pointer) {
             cursor: none !important;
           }
         `}</style>

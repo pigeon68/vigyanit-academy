@@ -140,6 +140,14 @@
     cursor: auto !important;
   }
 
+  /* Ensure interactive elements show the pointer (hand) when system cursor is enabled */
+  .show-cursor a,
+  .show-cursor button,
+  .show-cursor [role="button"],
+  .show-cursor .cursor-pointer {
+    cursor: pointer !important;
+  }
+
   /* Increase standard sizes for subheadings and nav */
   [class*="tracking-[0.5em]"], [class*="tracking-[0.4em]"], [class*="tracking-[0.3em]"] {
     font-size: 1.2em !important;
