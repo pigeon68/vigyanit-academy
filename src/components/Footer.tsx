@@ -68,7 +68,7 @@ export function Footer() {
               Navigation
             </h4>
               <ul className="space-y-4">
-                {["Programs", "About", "Results", "Trial-Lesson"].map((item) => (
+                {["Programs", "About", "Contact Us", "Trial-Lesson"].map((item) => (
                   <li key={item}>
                     <Link
                       href={`/${item.toLowerCase()}`}
