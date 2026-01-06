@@ -164,7 +164,8 @@ function ContactInfo() {
         <h3 className="text-[10px] tracking-[0.3em] uppercase text-[#c9a962] font-bold mb-6">Inquiries</h3>
         <p className="text-[#1a1a1a] font-serif text-2xl leading-snug">
           office@vigyanitacademy.com<br />
-          +61476149277
+          +61476149277<br />
+          +61478606299
         </p>
       </div>
 
