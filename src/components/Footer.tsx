@@ -71,7 +71,13 @@ export function Footer() {
                 {["Programs", "About", "Contact Us", "Trial-Lesson"].map((item) => (
                   <li key={item}>
                     <Link
-                      href={`/${item.toLowerCase()}`}
+                      href={
+                        item === "Trial-Lesson"
+                          ? `/${item.toLowerCase()}`
+                          : item === "Contact Us"
+                          ? "/contact"
+                          : `/${item.toLowerCase()}`
+                      }
                       className="text-sm text-[#71717a] hover:text-[#c9a962] transition-colors duration-300"
                     >
                       {item === "Trial-Lesson" ? "Trial Lesson" : item}
