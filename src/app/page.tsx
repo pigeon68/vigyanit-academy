@@ -232,6 +232,56 @@ function ProgramsPreview() {
   );
 }
 
+function LocationsSection() {
+  const locations = [
+    { name: "Kellyville", region: "Sydney" },
+    { name: "Riverstone", region: "Sydney" },
+    { name: "Online", region: null },
+  ];
+
+  return (
+    <section className="py-16 lg:py-24 bg-white border-b border-[#e5e5e5]">
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+        <div className="flex flex-col items-center text-center mb-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-2xl"
+          >
+            <span className="text-xs tracking-[0.4em] uppercase text-[#c9a962] font-bold block mb-4">
+              Locations
+            </span>
+            <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#1a1a1a] leading-tight">
+              Where We Operate
+            </h2>
+          </motion.div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          {locations.map((loc) => (
+            <motion.div
+              key={loc.name}
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className={`border border-[#e5e5e5] p-6 text-center bg-[#fafaf9] ${loc.region ? '' : 'flex items-center justify-center'}`}
+            >
+              <div className={`font-serif text-2xl lg:text-3xl text-[#1a1a1a] ${loc.region ? 'mb-2' : ''}`}>{loc.name}</div>
+              {loc.region && (
+                <div className="text-sm text-[#71717a]">{loc.region}</div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
 function LearningExperienceSection() {
   const experiences = [
     {
@@ -494,6 +544,7 @@ export default function HomePage() {
       <HeroSection />
       <StatsSection />
       <ProgramsPreview />
+      <LocationsSection />
       <LearningExperienceSection />
       <PhilosophySection />
       <TestimonialsSection />

@@ -95,9 +95,12 @@ export function CustomCursor() {
     return (
       <>
         <style jsx global>{`
-          /* Hide the system cursor for non-interactive elements
-             so interactive elements can still show pointer/hand */
-          *:not(a):not(button):not([role="button"]):not(.cursor-pointer) {
+          /* When the custom cursor is active, hide the system cursor everywhere
+             so the native pointer/hand is not visible. When the document root
+             contains the show-cursor class the component returns null and
+             this style is not rendered, restoring the default system cursor.
+          */
+          * {
             cursor: none !important;
           }
         `}</style>
