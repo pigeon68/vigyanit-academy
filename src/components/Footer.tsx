@@ -106,6 +106,7 @@ export function Footer() {
                 <ul className="space-y-4 text-sm text-[#71717a]">
                   <li>office@vigyanitacademy.com</li>
                   <li>+61476149277</li>
+                  <li>+61478606299</li>
                 </ul>
             </div>
         </div>

@@ -234,9 +234,9 @@ function ProgramsPreview() {
 
 function LocationsSection() {
   const locations = [
-    { name: "Kellyville", region: "Sydney" },
-    { name: "Riverstone", region: "Sydney" },
     { name: "Online", region: null },
+    { name: "Riverstone", region: "Sydney" },
+    { name: "Kellyville", region: "Sydney" },
   ];
 
   return (
