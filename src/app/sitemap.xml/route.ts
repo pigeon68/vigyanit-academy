@@ -39,15 +39,15 @@ export async function GET(_request: NextRequest) {
 
   // Fetch courses and classes from Supabase (if available).
   // Guard against runtime failures (missing env, network issues) so sitemap still returns.
-  let courses: any[] | undefined = undefined
-  let classes: any[] | undefined = undefined
+  let courses: any[] | null = null
+  let classes: any[] | null = null
   try {
     const results = await Promise.all([
       admin.from('courses').select('id,name,updated_at'),
       admin.from('classes').select('id,course_id,updated_at'),
     ])
-    courses = results[0]?.data
-    classes = results[1]?.data
+    courses = results[0]?.data ?? null
+    classes = results[1]?.data ?? null
   } catch (err) {
     // Log server-side; return static sitemap so Google can still read it.
     // eslint-disable-next-line no-console
