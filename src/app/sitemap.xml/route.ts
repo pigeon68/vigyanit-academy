@@ -37,11 +37,24 @@ function buildXml(entries: { loc: string; lastmod?: string }[]) {
 export async function GET(_request: NextRequest) {
   const admin = createAdminClient()
 
-  // Fetch courses and classes from Supabase (if available)
-  const [{ data: courses }, { data: classes }] = await Promise.all([
-    admin.from('courses').select('id,name,updated_at'),
-    admin.from('classes').select('id,course_id,updated_at'),
-  ])
+  // Fetch courses and classes from Supabase (if available).
+  // Guard against runtime failures (missing env, network issues) so sitemap still returns.
+  let courses: any[] | undefined = undefined
+  let classes: any[] | undefined = undefined
+  try {
+    const results = await Promise.all([
+      admin.from('courses').select('id,name,updated_at'),
+      admin.from('classes').select('id,course_id,updated_at'),
+    ])
+    courses = results[0]?.data
+    classes = results[1]?.data
+  } catch (err) {
+    // Log server-side; return static sitemap so Google can still read it.
+    // eslint-disable-next-line no-console
+    console.error('Sitemap: failed to fetch dynamic entries from Supabase', err)
+    courses = []
+    classes = []
+  }
 
   const entries: { loc: string; lastmod?: string }[] = []
 
