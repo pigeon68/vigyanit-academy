@@ -35,7 +35,7 @@ export function Footer() {
             <Link href="/" className="inline-flex items-center gap-3 mb-8">
               <div className="w-64 h-24 relative">
                 <Image
-                  src="/logo.png"
+                  src="/logo2.png"
                   alt="Logo"
                   fill
                   className="object-contain"
