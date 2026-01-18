@@ -44,8 +44,8 @@
                       >
                         <nav className="max-w-[1400px] mx-auto px-6 lg:px-12">
                           <div className="flex items-center justify-between h-16 sm:h-20 lg:h-24">
-                            <Link href="/" className="group flex items-center gap-3 cursor-pointer pointer-events-auto" aria-label="Home">
-                              <div className="w-32 h-12 sm:w-48 sm:h-16 lg:w-64 lg:h-24 relative cursor-pointer">
+                            <Link href="/" className="group flex items-center gap-0 -ml-16 md:-ml-24 lg:-ml-32 cursor-pointer pointer-events-auto" aria-label="Home">
+                              <div className="w-80 h-28 sm:w-[26rem] sm:h-32 lg:w-[32rem] lg:h-40 relative cursor-pointer">
                                 <Image
                                   src="/logo.png"
                                   alt="Logo"
