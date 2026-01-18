@@ -274,12 +274,11 @@ function LocationsSection() {
                 <>
                   <div className="text-sm text-[#71717a]">{loc.region}</div>
                   <div className="mt-6">
-                    <Link
-                      href={`/contact?location=${encodeURIComponent(loc.name)}`}
-                      className="inline-block px-4 py-2 text-sm tracking-[0.2em] uppercase border border-[#e5e5e5] text-[#1a1a1a] hover:border-[#c9a962] hover:text-[#c9a962] transition-colors duration-300"
+                    <span
+                      className="inline-block px-4 py-2 text-sm tracking-[0.2em] uppercase border border-[#e5e5e5] text-[#1a1a1a] bg-white cursor-default"
                     >
-                      Contact Us
-                    </Link>
+                      Contact us for more information
+                    </span>
                   </div>
                 </>
               ) : null}
