@@ -270,9 +270,19 @@ function LocationsSection() {
               className={`border border-[#e5e5e5] p-6 text-center bg-[#fafaf9] ${loc.region ? '' : 'flex items-center justify-center'}`}
             >
               <div className={`font-serif text-2xl lg:text-3xl text-[#1a1a1a] ${loc.region ? 'mb-2' : ''}`}>{loc.name}</div>
-              {loc.region && (
-                <div className="text-sm text-[#71717a]">{loc.region}</div>
-              )}
+              {loc.region ? (
+                <>
+                  <div className="text-sm text-[#71717a]">{loc.region}</div>
+                  <div className="mt-6">
+                    <Link
+                      href={`/contact?location=${encodeURIComponent(loc.name)}`}
+                      className="inline-block px-4 py-2 text-sm tracking-[0.2em] uppercase border border-[#e5e5e5] text-[#1a1a1a] hover:border-[#c9a962] hover:text-[#c9a962] transition-colors duration-300"
+                    >
+                      Contact Us
+                    </Link>
+                  </div>
+                </>
+              ) : null}
             </motion.div>
           ))}
         </div>
