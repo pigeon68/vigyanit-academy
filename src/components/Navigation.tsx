@@ -47,7 +47,7 @@
                             <Link href="/" className="group flex items-center gap-0 -ml-16 md:-ml-24 lg:-ml-32 cursor-pointer pointer-events-auto" aria-label="Home">
                               <div className="w-80 h-28 sm:w-[26rem] sm:h-32 lg:w-[32rem] lg:h-40 relative cursor-pointer">
                                 <Image
-                                  src="/logo.png?v=2"
+                                  src="/logo2.png"
                                   alt="Logo"
                                   fill
                                   sizes="(max-width: 640px) 128px, (max-width: 1024px) 192px, 256px"
