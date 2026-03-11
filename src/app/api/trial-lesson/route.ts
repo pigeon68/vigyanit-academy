@@ -8,7 +8,7 @@ const trialLessonSchema = z.object({
   parentEmail: z.string().email(),
   parentPhone: z.string().min(6).max(50),
   studentName: z.string().min(2).max(120),
-  courseId: z.string().uuid(),
+  courseId: z.string().min(1),
   classId: z.string().uuid(),
 });
 
@@ -26,7 +26,8 @@ export async function POST(req: Request) {
 
     const supabase = await createClient();
     const body = await req.json();
-    const { parentName, parentEmail, parentPhone, studentName, courseId, classId } = trialLessonSchema.parse(body);
+    const { parentName, parentEmail, parentPhone, studentName, courseId: rawCourseId, classId } = trialLessonSchema.parse(body);
+    const courseId = z.string().uuid().parse(rawCourseId.split("|")[0]);
 
     const { error } = await supabase
       .from("trial_lessons")

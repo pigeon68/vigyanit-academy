@@ -79,10 +79,15 @@ export default function TrialLessonPage() {
     setError("");
 
     try {
+      const payload = {
+        ...formData,
+        courseId: formData.courseId.split('|')[0],
+      };
+
       const res = await fetch("/api/trial-lesson", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const result = await res.json();
