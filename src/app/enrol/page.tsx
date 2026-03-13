@@ -210,6 +210,18 @@ export default function EnrolPage() {
 
   const steps: Step[] = ["parent", "student", "course", "summary", "payment"];
   const currentStepIndex = steps.indexOf(currentStep);
+  const PASSWORD_MIN_LENGTH = 12;
+
+  const getPasswordValidationMessage = (password: string, confirmPassword: string) => {
+    if (!password) return "";
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      return `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
+    }
+    if (confirmPassword && password !== confirmPassword) {
+      return "Passwords do not match";
+    }
+    return "";
+  };
 
   const calculateTotalPrice = () => {
     return enrolmentData.selection.subjects.reduce((sum, s) => sum + s.price, 0);
@@ -237,12 +249,9 @@ export default function EnrolPage() {
         setError("Please select your relationship to the student");
         return false;
       }
-      if (!parent.password || parent.password.length < 8) {
-        setError("Password must be at least 8 characters");
-        return false;
-      }
-      if (parent.password !== parent.confirmPassword) {
-        setError("Passwords do not match");
+      const passwordValidationMessage = getPasswordValidationMessage(parent.password, parent.confirmPassword);
+      if (passwordValidationMessage) {
+        setError(passwordValidationMessage);
         return false;
       }
       if (!parent.referralSource) {
@@ -322,7 +331,11 @@ export default function EnrolPage() {
       });
       const result = await res.json();
       if (!res.ok) {
-        const message = result.error || result.detail || "Enrolment failed";
+        const firstDetail =
+          result?.detail && typeof result.detail === "object"
+            ? Object.values(result.detail).flat().find((value) => typeof value === "string")
+            : undefined;
+        const message = firstDetail || result.error || "Enrolment failed";
         console.error("Enrolment failed", result);
         throw new Error(message);
       }
@@ -524,11 +537,19 @@ export default function EnrolPage() {
                     </div>
                     <div>
                       <label className={labelClasses}>Security Key (Password)</label>
-                      <input type="password" value={enrolmentData.parent.password} onChange={e => updateData('parent', 'password', e.target.value)} className={inputClasses} required />
+                      <input type="password" minLength={12} value={enrolmentData.parent.password} onChange={e => updateData('parent', 'password', e.target.value)} className={inputClasses} required />
+                      <p className="mt-2 text-[10px] tracking-wider uppercase text-[#a1a1aa]">
+                        Minimum 12 characters
+                      </p>
                     </div>
                     <div>
                       <label className={labelClasses}>Confirm Security Key</label>
                       <input type="password" value={enrolmentData.parent.confirmPassword} onChange={e => updateData('parent', 'confirmPassword', e.target.value)} className={inputClasses} required />
+                      {getPasswordValidationMessage(enrolmentData.parent.password, enrolmentData.parent.confirmPassword) && (
+                        <p className="mt-2 text-[10px] tracking-wider uppercase text-red-600">
+                          {getPasswordValidationMessage(enrolmentData.parent.password, enrolmentData.parent.confirmPassword)}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className={labelClasses}>How did you hear about us?</label>
