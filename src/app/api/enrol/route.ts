@@ -3,6 +3,37 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getClientIdentifier, rateLimit } from "@/lib/rate-limit";
 
+function mapAuthError(error: { message?: string; name?: string; status?: number }) {
+  const message = (error.message || "").toLowerCase();
+  const status = error.status;
+
+  const isConflict =
+    status === 409 ||
+    message.includes("already been registered") ||
+    message.includes("already registered") ||
+    message.includes("user already") ||
+    message.includes("duplicate");
+
+  if (isConflict) {
+    return {
+      status: 409,
+      message: "This email is already registered. Please log in or use a different email.",
+    };
+  }
+
+  if (message.includes("password")) {
+    return {
+      status: 400,
+      message: "Password does not meet security requirements. Please use at least 12 characters.",
+    };
+  }
+
+  return {
+    status: 500,
+    message: "Unable to create account right now. Please try again.",
+  };
+}
+
 const enrolSchema = z.object({
   parent: z.object({
     email: z.string().email().max(254),
@@ -37,7 +68,7 @@ const enrolSchema = z.object({
       )
       .nonempty(),
   }),
-  paymentMethod: z.enum(["stripe", "cash"]).optional(),
+  paymentMethod: z.enum(["stripe", "cash", "bank_transfer"]).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -73,6 +104,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { parent, student, selection, paymentMethod } = parsed.data;
+    const normalizedPaymentMethod = paymentMethod === "bank_transfer" ? "cash" : paymentMethod;
 
     const supabase = createAdminClient();
 
@@ -85,20 +117,21 @@ export async function POST(request: NextRequest) {
     });
 
     if (authError) {
-      const message = authError.message || "Auth creation failed";
-      const isConflict = message.toLowerCase().includes("already been registered");
+      const mapped = mapAuthError({
+        message: authError.message,
+        name: authError.name,
+        status: (authError as any)?.status,
+      });
       return NextResponse.json(
         {
-          error: isConflict
-            ? "This email is already registered. Please log in or use a different email."
-            : message,
+          error: mapped.message,
           detail: {
             name: authError.name,
             message: authError.message,
             status: (authError as any)?.status,
           },
         },
-        { status: isConflict ? 409 : 500 }
+        { status: mapped.status }
       );
     }
 
@@ -142,7 +175,24 @@ export async function POST(request: NextRequest) {
         user_metadata: { role: 'student', require_password_reset: true }
       });
 
-      if (studentAuthError) throw studentAuthError;
+      if (studentAuthError) {
+        const mapped = mapAuthError({
+          message: studentAuthError.message,
+          name: studentAuthError.name,
+          status: (studentAuthError as any)?.status,
+        });
+        return NextResponse.json(
+          {
+            error: mapped.message,
+            detail: {
+              name: studentAuthError.name,
+              message: studentAuthError.message,
+              status: (studentAuthError as any)?.status,
+            },
+          },
+          { status: mapped.status }
+        );
+      }
 
         if (studentAuthData.user) {
           // Create Student Profile
@@ -175,7 +225,7 @@ export async function POST(request: NextRequest) {
               selected_subject: selectedSubjects[0] || null,
               selected_course: selectedCoursesNames || null,
               preferred_class: preferredClassesNames || null,
-              payment_method: paymentMethod || 'stripe'
+              payment_method: normalizedPaymentMethod || 'stripe'
             })
             .select()
             .single();
