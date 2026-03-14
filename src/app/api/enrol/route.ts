@@ -232,14 +232,19 @@ export async function POST(request: NextRequest) {
 
           if (studentError) throw studentError;
 
-              // Link Parent and Student using UUID profile IDs
-              const studentProfileId = (studentData as any)?.profile_id || studentAuthData.user.id;
-              const parentProfileId = parentData?.profile_id || authData.user.id;
+              // parent_student.parent_id references profiles.id and student_id references students.id.
+              const parentRecordId = authData.user.id;
+              const studentRecordId = (studentData as any)?.id;
+
+              if (!parentRecordId || !studentRecordId) {
+                throw new Error("Failed to resolve parent/student record ids for relationship link");
+              }
+
               const { error: relationshipError } = await supabase
                 .from("parent_student")
                 .insert({
-                  parent_id: parentProfileId,
-                  student_id: studentProfileId,
+                  parent_id: parentRecordId,
+                  student_id: studentRecordId,
                   relationship_type: parent.relationship || "parent",
                 });
 
@@ -247,7 +252,7 @@ export async function POST(request: NextRequest) {
 
               return NextResponse.json({ 
                 success: true, 
-                studentId: studentProfileId,
+                studentId: studentAuthData.user.id,
                 studentNumber,
                 studentPassword
               });
@@ -256,7 +261,20 @@ export async function POST(request: NextRequest) {
   
       return NextResponse.json({ error: "Failed to create user" }, { status: 400 });
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error || "Unknown error");
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error !== null && "message" in error
+            ? String((error as { message?: unknown }).message || "Unknown error")
+            : String(error || "Unknown error");
+      const detail =
+        typeof error === "object" && error !== null
+          ? {
+              code: (error as { code?: unknown }).code,
+              details: (error as { details?: unknown }).details,
+              hint: (error as { hint?: unknown }).hint,
+            }
+          : undefined;
       if (message.toLowerCase().includes("already been registered")) {
         return NextResponse.json(
           {
@@ -266,10 +284,12 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      console.error("Enrolment error", { message });
+      console.error("Enrolment error", { message, detail, error });
       return NextResponse.json(
         {
           error: "An error occurred while processing enrolment.",
+          detail: message,
+          meta: detail,
         },
         { status: 500 }
       );

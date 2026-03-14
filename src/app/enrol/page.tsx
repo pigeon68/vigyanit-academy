@@ -356,11 +356,23 @@ export default function EnrolPage() {
           });
         const checkoutResult = await checkoutRes.json();
         if (!checkoutRes.ok) throw new Error(checkoutResult.error || "Checkout failed");
+        if (!checkoutResult?.url || typeof checkoutResult.url !== "string") {
+          throw new Error("Checkout URL is missing");
+        }
         
         localStorage.removeItem("enrolmentData");
         localStorage.removeItem("enrolmentStep");
+
+        // Stripe checkout URLs are signed; do not append custom query params.
+        sessionStorage.setItem(
+          "enrolCredentials",
+          JSON.stringify({
+            studentNumber: result.studentNumber,
+            studentPassword: result.studentPassword,
+          })
+        );
         
-        window.location.href = checkoutResult.url + `&studentNumber=${encodeURIComponent(result.studentNumber)}&studentPassword=${encodeURIComponent(result.studentPassword)}`;
+        window.location.href = checkoutResult.url;
         } else {
           localStorage.removeItem("enrolmentData");
           localStorage.removeItem("enrolmentStep");

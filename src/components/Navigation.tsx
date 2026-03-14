@@ -44,7 +44,7 @@ export function Navigation() {
             {/* LEFT — LOGO */}
             <div className="flex items-center">
               <Link href="/" aria-label="Home">
-                <div className="relative w-48 h-16 sm:w-56 sm:h-18 lg:w-64 lg:h-20">
+                <div className="relative w-28 h-9 sm:w-32 sm:h-10 lg:w-40 lg:h-12">
                   <Image
                     src="/logo2.png"
                     alt="Logo"

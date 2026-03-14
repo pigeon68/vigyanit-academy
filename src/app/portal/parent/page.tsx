@@ -63,7 +63,7 @@ export default function ParentPortal() {
       const { data: childrenData } = await supabase
         .from("parent_student")
         .select(`student:students (id, student_number, grade_level, profile:profiles(full_name, email))`)
-        .eq("parent_id", parent.id);
+        .eq("parent_id", user.id);
 
         if (childrenData && childrenData.length > 0) {
           const childIds = childrenData.map((c: any) => c.student.id);
