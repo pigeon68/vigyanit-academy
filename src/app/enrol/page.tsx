@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -85,109 +85,9 @@ export default function EnrolPage() {
 
   const [dbClasses, setDbClasses] = useState<any[]>([]);
   const [dbCourses, setDbCourses] = useState<any[]>([]);
-  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
-  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
-  const [isSelectingAddress, setIsSelectingAddress] = useState(false);
-  const addressContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
   // No client-side persistence for sensitive data (passwords/PII)
-
-  // Handle click outside for address suggestions
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (addressContainerRef.current && !addressContainerRef.current.contains(event.target as Node)) {
-        setAddressSuggestions([]);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const searchAddress = async (query: string) => {
-    if (query.length < 3) {
-      setAddressSuggestions([]);
-      return;
-    }
-    setIsSearchingAddress(true);
-    try {
-      const res = await fetch(`/api/address-search?q=${encodeURIComponent(query.trim())}`);
-      const data = await res.json();
-      setAddressSuggestions(data || []);
-    } catch (err) {
-      console.error("Address search failed", err);
-    } finally {
-      setIsSearchingAddress(false);
-    }
-  };
-
-  const mapState = (state: string) => {
-    if (!state) return "";
-    const s = state.toUpperCase();
-    if (s.includes("NEW SOUTH WALES") || s === "NSW") return "NSW";
-    if (s.includes("VICTORIA") || s === "VIC") return "VIC";
-    if (s.includes("QUEENSLAND") || s === "QLD") return "QLD";
-    if (s.includes("WESTERN AUSTRALIA") || s === "WA") return "WA";
-    if (s.includes("SOUTH AUSTRALIA") || s === "SA") return "SA";
-    if (s.includes("TASMANIA") || s === "TAS") return "TAS";
-    if (s.includes("AUSTRALIAN CAPITAL TERRITORY") || s === "ACT") return "ACT";
-    if (s.includes("NORTHERN TERRITORY") || s === "NT") return "NT";
-    return s;
-  };
-
-  const selectAddress = (result: any) => {
-    setIsSelectingAddress(true);
-    const { address, display_name } = result;
-    const parts = display_name.split(', ');
-    
-    const query = enrolmentData.parent.address.trim();
-    const queryMatch = query.match(/^(\d+[a-zA-Z0-9\-\/]*)/);
-    const queryNumber = queryMatch ? queryMatch[1] : "";
-
-    let houseNumber = address.house_number || "";
-    let street = address.road || address.pedestrian || address.cycleway || "";
-
-    if (!houseNumber && queryNumber && !/^\d/.test(parts[0])) {
-      houseNumber = queryNumber;
-    }
-
-    let fullAddress = "";
-    if (houseNumber) {
-      const streetPart = street || (!/^\d/.test(parts[0]) ? parts[0] : parts[1]);
-      fullAddress = `${houseNumber} ${streetPart}`;
-    } else {
-      if (/^\d/.test(parts[0])) {
-        fullAddress = parts[0];
-      } else {
-        fullAddress = parts[0];
-      }
-    }
-    
-    setEnrolmentData(prev => ({
-      ...prev,
-      parent: {
-        ...prev.parent,
-        address: fullAddress,
-        suburb: address.suburb || address.city_district || address.town || address.village || address.city || "",
-        postcode: address.postcode || "",
-        state: mapState(address.state || ""),
-      }
-    }));
-    setAddressSuggestions([]);
-  };
-
-  useEffect(() => {
-    if (isSelectingAddress) {
-      setIsSelectingAddress(false);
-      return;
-    }
-    const timer = setTimeout(() => {
-      if (currentStep === 'parent' && enrolmentData.parent.address.length >= 3) {
-        searchAddress(enrolmentData.parent.address);
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [enrolmentData.parent.address, currentStep]);
 
   useEffect(() => {
     async function loadAcademicData() {
@@ -578,83 +478,16 @@ export default function EnrolPage() {
                   <div className="space-y-10 pt-4">
                     <h3 className="text-[8px] tracking-[0.3em] uppercase text-[#1a1a1a] font-bold">Residential Address</h3>
                     <div className="grid md:grid-cols-2 gap-10">
-                        <div className="md:col-span-2 relative" ref={addressContainerRef}>
+                        <div className="md:col-span-2">
                           <label className={labelClasses}>Address</label>
-                          <div className="relative">
-                            <input 
-                              type="text" 
-                              value={enrolmentData.parent.address} 
-                              onChange={e => {
-                                updateData('parent', 'address', e.target.value);
-                              }} 
-                              className={inputClasses} 
-                              placeholder="Start typing your address..."
-                              required 
-                            />
-                            {isSearchingAddress && (
-                              <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                                <div className="w-4 h-4 border-2 border-[#c9a962]/30 border-t-[#c9a962] rounded-full animate-spin" />
-                              </div>
-                            )}
-                          </div>
-                          
-                              {addressSuggestions.length > 0 && (
-                                <div 
-                                  className="absolute z-[100] w-full bg-white border border-[#e5e5e5] shadow-2xl mt-1 max-h-72 overflow-y-auto custom-scrollbar"
-                                  style={{ overscrollBehavior: 'contain' }}
-                                >
-                                    {addressSuggestions.map((suggestion, i) => {
-                                      const { address, display_name } = suggestion;
-                                      const parts: string[] = display_name.split(', ');
-                                      const queryInput = enrolmentData.parent.address.trim();
-                                      const queryMatch = queryInput.match(/^(\d+[a-zA-Z0-9\-\/]*)/);
-                                      const queryNumber = queryMatch ? queryMatch[1] : "";
-
-                                      let houseNumber = address.house_number || "";
-                                      let street = address.road || address.pedestrian || address.cycleway || "";
-
-                                      if (!houseNumber && queryNumber && !/^\d/.test(parts[0])) {
-                                        houseNumber = queryNumber;
-                                      }
-
-                                      let mainAddress = "";
-                                      let subAddress = "";
-
-                                      if (houseNumber) {
-                                        const streetPart = street || (!/^\d/.test(parts[0]) ? parts[0] : parts[1]);
-                                        mainAddress = `${houseNumber} ${streetPart}`;
-                                        subAddress = parts
-                                          .filter((part: string) => part !== houseNumber && part !== streetPart && part !== address.house_number)
-                                          .join(', ');
-                                      } else {
-                                        mainAddress = parts[0];
-                                        subAddress = parts.slice(1).join(', ');
-                                      }
-
-                                      return (
-                                        <button
-                                          key={i}
-                                          type="button"
-                                          onClick={() => selectAddress(suggestion)}
-                                          className="w-full text-left p-4 hover:bg-[#c9a962]/10 border-b border-[#f4f4f5] last:border-0 transition-colors cursor-pointer block"
-                                        >
-                                          <p className="text-sm font-bold text-[#1a1a1a]">
-                                            {mainAddress}
-                                          </p>
-                                          <p className="text-[10px] text-[#a1a1aa] uppercase tracking-wider line-clamp-1">
-                                            {subAddress}
-                                          </p>
-                                        </button>
-                                      );
-                                    })}
-                                </div>
-                              )}
-
-                          {addressSuggestions.length === 0 && enrolmentData.parent.address.length >= 3 && !isSearchingAddress && !isSelectingAddress && (
-                            <div className="absolute z-[100] w-full bg-white border border-[#e5e5e5] shadow-2xl mt-1 p-4 text-xs text-[#a1a1aa] uppercase tracking-widest">
-                              No addresses found in Australia
-                            </div>
-                          )}
+                          <input 
+                            type="text" 
+                            value={enrolmentData.parent.address} 
+                            onChange={e => updateData('parent', 'address', e.target.value)} 
+                            className={inputClasses} 
+                            placeholder="Enter your full street address"
+                            required 
+                          />
                         </div>
                       <div>
                         <label className={labelClasses}>Suburb</label>

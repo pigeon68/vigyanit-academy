@@ -132,6 +132,7 @@ interface Course {
     const [courses, setCourses] = useState<Course[]>([]);
     const [classes, setClasses] = useState<Class[]>([]);
     const [trialLessons, setTrialLessons] = useState<TrialLesson[]>([]);
+    const [updatingTrialId, setUpdatingTrialId] = useState<string | null>(null);
     const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
     const [showProfile, setShowProfile] = useState(false);
     const [activeTab, setActiveTab] = useState<"onboarding" | "curriculum" | "faculty" | "comms" | "lookup" | "trials" | "messages">("onboarding");
@@ -355,6 +356,29 @@ interface Course {
         else {
           const normalized = (data || []).map(normalizeTrialLessonRecord);
           setTrialLessons(normalized);
+        }
+      }
+
+      async function handleMarkTrialProcessed(trialId: string) {
+        setUpdatingTrialId(trialId);
+        try {
+          const { error } = await supabase
+            .from("trial_lessons")
+            .update({ status: "processed" })
+            .eq("id", trialId);
+
+          if (error) throw error;
+
+          setTrialLessons((prev) =>
+            prev.map((trial) =>
+              trial.id === trialId ? { ...trial, status: "processed" } : trial
+            )
+          );
+        } catch (err) {
+          console.error("Update trial status failed:", err);
+          alert(err instanceof Error ? err.message : "Failed to update trial status");
+        } finally {
+          setUpdatingTrialId(null);
         }
       }
 
@@ -1120,15 +1144,20 @@ interface Course {
                               <th className="px-8 py-4 text-[10px] tracking-widest font-bold uppercase text-gray-400">Parent Info</th>
                               <th className="px-8 py-4 text-[10px] tracking-widest font-bold uppercase text-gray-400">Course & Class</th>
                               <th className="px-8 py-4 text-[10px] tracking-widest font-bold uppercase text-gray-400">Status</th>
+                              <th className="px-8 py-4 text-[10px] tracking-widest font-bold uppercase text-gray-400">Action</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-50">
                             {trialLessons.length === 0 ? (
                               <tr>
-                                <td colSpan={5} className="px-8 py-20 text-center text-gray-400 italic">No trial lesson requests found.</td>
+                                <td colSpan={6} className="px-8 py-20 text-center text-gray-400 italic">No trial lesson requests found.</td>
                               </tr>
                             ) : (
-                              trialLessons.map(trial => (
+                              trialLessons.map(trial => {
+                                const statusValue = (trial.status || "pending").toLowerCase();
+                                const isPending = statusValue === "pending";
+
+                                return (
                                 <tr key={trial.id} className="hover:bg-gray-50/50 transition-colors">
                                   <td className="px-8 py-6 text-sm text-gray-500 whitespace-nowrap">
                                     {new Date(trial.created_at).toLocaleDateString()}
@@ -1149,14 +1178,27 @@ interface Course {
                                   </td>
                                   <td className="px-8 py-6">
                                     <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                                      trial.status === 'confirmed' ? 'bg-green-100 text-green-600' : 
-                                      trial.status === 'cancelled' ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'
+                                      statusValue === 'processed' || statusValue === 'confirmed' ? 'bg-green-100 text-green-600' : 
+                                      statusValue === 'cancelled' ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'
                                     }`}>
-                                      {trial.status || 'Pending'}
+                                      {statusValue}
                                     </span>
                                   </td>
+                                  <td className="px-8 py-6">
+                                    {isPending ? (
+                                      <button
+                                        onClick={() => handleMarkTrialProcessed(trial.id)}
+                                        disabled={updatingTrialId === trial.id}
+                                        className="px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest bg-green-100 text-green-700 hover:bg-green-200 transition-colors disabled:opacity-60"
+                                      >
+                                        {updatingTrialId === trial.id ? "Updating..." : "Mark Processed"}
+                                      </button>
+                                    ) : (
+                                      <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">-</span>
+                                    )}
+                                  </td>
                                 </tr>
-                              ))
+                              )})
                             )}
                           </tbody>
                         </table>
